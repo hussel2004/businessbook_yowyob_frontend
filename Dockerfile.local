@@ -1,0 +1,11 @@
+# =============================================================================
+# BUSINESSBOOK FRONTEND - Local Quick Rebuild (offline, no internet pull)
+# Base image already cached locally — only copies fresh .next build on top.
+# =============================================================================
+FROM hussel/businessbook:frontend-latest
+
+USER root
+COPY .next /app/.next
+RUN chown -R nextjs:nodejs /app/.next
+
+USER nextjs

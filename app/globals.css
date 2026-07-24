@@ -1,0 +1,278 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== CSS Variables ===== */
+:root {
+  /* Colors for light mode */
+  --background: 0 0% 100%;
+  --background-secondary: 210 40% 98%;
+  --foreground: 222 47% 11%;
+  --foreground-muted: 215 16% 47%;
+  --border: 214 32% 91%;
+  --ring: 221 83% 53%;
+  
+  /* Scrollbar */
+  --scrollbar-thumb: 215 16% 75%;
+  --scrollbar-track: 210 40% 96%;
+}
+
+.dark {
+  /* Colors for dark mode */
+  --background: 222 47% 11%;
+  --background-secondary: 217 33% 17%;
+  --foreground: 210 40% 98%;
+  --foreground-muted: 215 16% 65%;
+  --border: 217 33% 25%;
+  --ring: 213 94% 68%;
+  
+  /* Scrollbar */
+  --scrollbar-thumb: 215 20% 40%;
+  --scrollbar-track: 217 33% 17%;
+}
+
+/* ===== Base Styles ===== */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Focus visible for accessibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--scrollbar-track));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--scrollbar-thumb));
+    @apply rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/50;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-primary/20 text-primary-900;
+  }
+
+  .dark ::selection {
+    @apply bg-primary/30 text-primary-100;
+  }
+
+  /* Disable text selection on interactive elements */
+  button,
+  [role="button"] {
+    @apply select-none;
+  }
+}
+
+/* ===== Component Styles ===== */
+@layer components {
+  /* Container wrapper */
+  .container-wrapper {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Section spacing */
+  .section {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-background rounded-xl border border-border shadow-soft transition-shadow duration-200;
+  }
+
+  .card:hover {
+    @apply shadow-lg;
+  }
+
+  /* Gradient backgrounds */
+  .bg-gradient-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-700;
+  }
+
+  .bg-gradient-secondary {
+    @apply bg-gradient-to-r from-secondary-500 to-secondary-600;
+  }
+
+  .bg-gradient-hero {
+    @apply bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg;
+  }
+
+  /* Text gradient */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent;
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    @apply relative overflow-hidden;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--background-secondary)) 0%,
+      hsl(var(--background)) 50%,
+      hsl(var(--background-secondary)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+  }
+
+  /* Link underline animation */
+  .link-underline {
+    @apply relative;
+  }
+
+  .link-underline::after {
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 content-[''];
+  }
+
+  .link-underline:hover::after {
+    @apply w-full;
+  }
+
+  /* Verified badge */
+  .verified-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-primary-700 bg-primary-50 rounded-full;
+  }
+
+  .dark .verified-badge {
+    @apply text-primary-300 bg-primary-900/50;
+  }
+}
+
+/* ===== Utility Styles ===== */
+@layer utilities {
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Truncate with ellipsis */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Safe area insets for mobile */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Aspect ratios */
+  .aspect-card {
+    aspect-ratio: 4/3;
+  }
+
+  .aspect-hero {
+    aspect-ratio: 16/9;
+  }
+
+  /* Text balance for headings */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Prevent text overflow */
+  .break-anywhere {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ===== Animation Utilities ===== */
+@layer utilities {
+  /* Entrance animations */
+  .animate-in {
+    animation-duration: 0.3s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
+  }
+
+  .fade-in {
+    animation-name: fadeIn;
+  }
+
+  .slide-in-from-bottom {
+    animation-name: slideInUp;
+  }
+
+  .slide-in-from-top {
+    animation-name: slideInDown;
+  }
+
+  .slide-in-from-left {
+    animation-name: slideInLeft;
+  }
+
+  .slide-in-from-right {
+    animation-name: slideInRight;
+  }
+
+  .zoom-in {
+    animation-name: scaleIn;
+  }
+
+  /* Stagger children animations */
+  .stagger-children > * {
+    animation-fill-mode: both;
+  }
+
+  .stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+  .stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+  .stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+  .stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+  .stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+  .stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+}
+
+/* ===== Google Fonts Import ===== */
+/* Inter font - loaded via next/font in layout.tsx for better performance */

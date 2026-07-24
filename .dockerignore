@@ -1,0 +1,39 @@
+# Ignore everything
+*
+
+# Include necessary files
+!app
+!components
+!lib
+!types
+!public
+!package.json
+!package-lock.json
+!next.config.js
+!next-env.d.ts
+!tsconfig.json
+!tailwind.config.ts
+!postcss.config.js
+
+# Exclude development/test files
+!node_modules/
+!.next
+coverage/
+test-results/
+playwright-report/
+e2e/
+
+# Exclude logs
+*.log
+*.txt
+
+# Exclude IDE
+.idea/
+.vscode/
+.swc/
+
+# Exclude other
+_bmad-output/
+docs_frontend/
+.agent/
+.gemini/

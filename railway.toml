@@ -1,0 +1,15 @@
+# =============================================================================
+# BUSINESSBOOK FRONTEND - Railway Configuration
+# =============================================================================
+# This file tells Railway how to build and run the frontend
+
+[build]
+builder = "nixpacks"
+buildCommand = "npm install && npm run build"
+
+[deploy]
+startCommand = "npm run start"
+healthcheckPath = "/"
+healthcheckTimeout = 120
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
