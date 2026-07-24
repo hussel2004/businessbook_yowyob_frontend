@@ -59,15 +59,27 @@ export default function LocationPicker({ initialLocation, onLocationSelect, clas
     useEffect(() => {
         setIsMounted(true);
 
-        // Fix Leaflet icon on client side only
+        // Fix Leaflet icon on client side only. Pas d'assets locaux dans public/ pour
+        // l'instant (voir agency-map.tsx qui utilise le meme CDN) — icone invisible sinon.
         // @ts-ignore
         delete L.Icon.Default.prototype._getIconUrl;
         L.Icon.Default.mergeOptions({
-            iconRetinaUrl: '/images/leaflet/marker-icon-2x.png',
-            iconUrl: '/images/leaflet/marker-icon.png',
-            shadowUrl: '/images/leaflet/marker-shadow.png',
+            iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+            iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
         });
     }, []);
+
+    // Le formulaire parent peut peupler initialLocation de facon asynchrone (fetch des
+    // donnees existantes en mode edition, apres le montage de la carte) — sans cet effet,
+    // le marqueur resterait bloque au centre par defaut tant que l'utilisateur n'a pas
+    // clique lui-meme sur la carte.
+    useEffect(() => {
+        if (initialLocation && !location) {
+            setLocation(initialLocation);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialLocation]);
 
     const handleGeolocation = () => {
         if (!navigator.geolocation) return;

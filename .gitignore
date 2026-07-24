@@ -39,6 +39,11 @@ next-env.d.ts
 /public/sw.js.map
 /public/workbox-*.js
 /public/workbox-*.js.map
+/public/fallback-*.js
+/public/fallback-*.js.map
+
+# Outils de build local (docker-compose dev, non utilises en CI/prod)
+Dockerfile.compose-local
 
 # IDE
 .idea/

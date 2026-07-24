@@ -543,7 +543,7 @@ export default function AgenciesPage() {
                         {/* Address Form */}
                         <div className="col-span-2 border-t pt-4 mt-2">
                             <h3 className="font-medium mb-4">Adresse</h3>
-                            <OrgAddressForm register={register} errors={errors} prefix="address" />
+                            <OrgAddressForm register={register} errors={errors} setValue={setValue} watch={watch} prefix="address" />
                         </div>
 
                         {/* Contacts */}

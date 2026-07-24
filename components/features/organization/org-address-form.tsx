@@ -1,18 +1,26 @@
 'use client';
 
-import { UseFormRegister, FieldErrors } from 'react-hook-form';
+import dynamic from 'next/dynamic';
+import { UseFormRegister, UseFormSetValue, UseFormWatch, FieldErrors } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
+const LocationPicker = dynamic(() => import('@/components/features/map/location-picker'), {
+    loading: () => <div className="h-[300px] w-full bg-muted animate-pulse rounded-md flex items-center justify-center text-sm text-muted-foreground">Chargement de la carte...</div>,
+    ssr: false,
+});
+
 interface OrgAddressFormProps {
     register: UseFormRegister<any>;
     errors: FieldErrors<any>;
-    control?: any; // Kept for future use (Select/Map)
+    control?: any; // Kept for future use (Select)
+    setValue?: UseFormSetValue<any>;
+    watch?: UseFormWatch<any>;
     prefix?: string;
 }
 
-export function OrgAddressForm({ register, errors, prefix = 'address' }: OrgAddressFormProps) {
+export function OrgAddressForm({ register, errors, setValue, watch, prefix = 'address' }: OrgAddressFormProps) {
     // Helper to access nested errors
     const getError = (field: string) => {
         const fieldPath = `${prefix}.${field}`;
@@ -111,10 +119,30 @@ export function OrgAddressForm({ register, errors, prefix = 'address' }: OrgAddr
                 />
             </div>
 
-            {/* Lat/Long could be hidden or advanced */}
-            <details className="text-sm text-muted-foreground">
-                <summary className="cursor-pointer mb-2">Coordonnées GPS (Avancé)</summary>
-                <div className="grid gap-4 md:grid-cols-2 pl-4 border-l-2">
+            {/* Localisation GPS — carte cliquable en priorité, champs numériques en repli/precision */}
+            <div className="space-y-2">
+                <Label>Localisation sur la carte</Label>
+                {setValue ? (
+                    <>
+                        <p className="text-sm text-muted-foreground">
+                            Cliquez sur la carte pour positionner précisément le lieu (ou utilisez le bouton "Ma position").
+                        </p>
+                        <LocationPicker
+                            initialLocation={
+                                watch?.(`${prefix}.latitude`) && watch?.(`${prefix}.longitude`)
+                                    ? { lat: watch(`${prefix}.latitude`), lng: watch(`${prefix}.longitude`) }
+                                    : undefined
+                            }
+                            onLocationSelect={(loc) => {
+                                setValue(`${prefix}.latitude`, loc.lat, { shouldValidate: true, shouldDirty: true });
+                                setValue(`${prefix}.longitude`, loc.lng, { shouldValidate: true, shouldDirty: true });
+                            }}
+                        />
+                    </>
+                ) : (
+                    <p className="text-sm text-muted-foreground">Renseignez les coordonnées manuellement ci-dessous.</p>
+                )}
+                <div className="grid gap-4 md:grid-cols-2 pt-2">
                     <div className="space-y-2">
                         <Label htmlFor={`${prefix}.latitude`}>Latitude</Label>
                         <Input
@@ -134,7 +162,7 @@ export function OrgAddressForm({ register, errors, prefix = 'address' }: OrgAddr
                         />
                     </div>
                 </div>
-            </details>
+            </div>
         </div>
     );
 }
