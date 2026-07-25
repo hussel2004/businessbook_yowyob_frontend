@@ -107,4 +107,8 @@ const withPWA = require("@ducanh2912/next-pwa").default({
     skipWaiting: true,
 });
 
-module.exports = withPWA(nextConfig);
+// i18n (fr/en) — locale résolue par cookie, pas de préfixe d'URL
+const createNextIntlPlugin = require('next-intl/plugin');
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
+
+module.exports = withNextIntl(withPWA(nextConfig));

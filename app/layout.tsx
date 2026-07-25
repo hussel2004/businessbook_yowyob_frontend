@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import { Providers } from './providers';
 import { UnverifiedBanner } from '@/components/features/auth/unverified-banner';
 import './globals.css';
@@ -108,13 +110,17 @@ export const viewport: Viewport = {
  * Root Layout
  * Wraps the entire application with providers and global styles
  */
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const locale = await getLocale();
+    const messages = await getMessages();
+    const t = await getTranslations('nav');
+
     return (
-        <html lang="fr" suppressHydrationWarning>
+        <html lang={locale} suppressHydrationWarning>
             <head>
                 {/* Preconnect to external resources */}
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -124,22 +130,24 @@ export default function RootLayout({
                 <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_API_URL} />
             </head>
             <body className={`${inter.variable} font-sans antialiased`}>
-                <Providers>
-                    {/* Skip to content link for accessibility */}
-                    <a
-                        href="#main-content"
-                        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md"
-                    >
-                        Aller au contenu principal
-                    </a>
+                <NextIntlClientProvider locale={locale} messages={messages}>
+                    <Providers>
+                        {/* Skip to content link for accessibility */}
+                        <a
+                            href="#main-content"
+                            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md"
+                        >
+                            {t('skipToContent')}
+                        </a>
 
-                    <UnverifiedBanner />
+                        <UnverifiedBanner />
 
-                    {/* Main content */}
-                    <div id="main-content" className="min-h-screen flex flex-col">
-                        {children}
-                    </div>
-                </Providers>
+                        {/* Main content */}
+                        <div id="main-content" className="min-h-screen flex flex-col">
+                            {children}
+                        </div>
+                    </Providers>
+                </NextIntlClientProvider>
             </body>
         </html>
     );
