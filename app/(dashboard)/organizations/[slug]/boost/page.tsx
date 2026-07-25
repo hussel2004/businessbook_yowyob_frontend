@@ -1,21 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Rocket, Check, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { getOrganizationBySlug } from '@/lib/api/public';
-import { getBoostSubscription, activateBoost } from '@/lib/api/boost';
-import {
-    BOOST_PLANS,
-    getBoostTotalPrice,
-    getBoostMonthlyEquivalent,
-    getBoostDiscountPercent,
-    type BoostPlan,
-} from '@/lib/constants/billing';
+import { billingApi, type BoostPlanOffer } from '@/lib/api/billing';
 import { formatPrice, formatDate } from '@/lib/utils/format';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,28 +16,65 @@ import { Spinner } from '@/components/ui/spinner';
 import { CheckoutModal } from '@/components/features/billing/checkout-modal';
 import { cn } from '@/lib/utils/cn';
 
+/** Ajouté à l'URL de retour pour reprendre la confirmation après le paiement. */
+const PAYMENT_PARAM = 'paymentOrderId';
+
 export default function BoostPage() {
     const params = useParams();
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const slug = params.slug as string;
     const t = useTranslations('boost');
     const tCommon = useTranslations('common');
+    const tPayment = useTranslations('payment');
     const queryClient = useQueryClient();
 
-    const [selectedPlan, setSelectedPlan] = useState<BoostPlan | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<BoostPlanOffer | null>(null);
     const [checkoutOpen, setCheckoutOpen] = useState(false);
+    // Une seule tentative de confirmation par retour de paiement
+    const confirmedRef = useRef<string | null>(null);
 
     const { data: org } = useQuery({
         queryKey: ['organization', slug],
         queryFn: () => getOrganizationBySlug(slug),
     });
 
+    const { data: catalog } = useQuery({
+        queryKey: ['billing-catalog'],
+        queryFn: billingApi.getCatalog,
+        staleTime: 30 * 60 * 1000,
+    });
+
     const { data: subscription, isLoading: subLoading } = useQuery({
         queryKey: ['boost-subscription', org?.id],
-        queryFn: () => getBoostSubscription(org!.id),
+        queryFn: () => billingApi.getBoostSubscription(org!.id),
         enabled: !!org?.id,
     });
 
-    if (!org) {
+    // Retour depuis la page de paiement : on relit le statut auprès du serveur,
+    // qui le revérifie lui-même auprès du fournisseur.
+    const returnedOrderId = searchParams.get(PAYMENT_PARAM);
+    useEffect(() => {
+        if (!returnedOrderId || !org?.id || confirmedRef.current === returnedOrderId) return;
+        confirmedRef.current = returnedOrderId;
+
+        billingApi
+            .confirmBoost(org.id, returnedOrderId)
+            .then(async (sub) => {
+                if (sub.active) {
+                    toast.success(t('successToast'));
+                } else if (sub.status === 'PENDING') {
+                    toast(tPayment('pending'));
+                } else {
+                    toast.error(tPayment('failed'));
+                }
+                await queryClient.invalidateQueries({ queryKey: ['boost-subscription', org.id] });
+            })
+            .catch(() => toast.error(tPayment('failed')))
+            .finally(() => router.replace(`/organizations/${slug}/boost`, { scroll: false }));
+    }, [returnedOrderId, org?.id, queryClient, router, slug, t, tPayment]);
+
+    if (!org || !catalog) {
         return (
             <div className="flex justify-center py-12">
                 <Spinner />
@@ -60,19 +90,16 @@ export default function BoostPage() {
         t('features.support'),
     ];
 
-    const cycleLabel = (cycle: BoostPlan['cycle']) => t(`billing.${cycle}`);
-    const billedLabel = (cycle: BoostPlan['cycle']) => {
-        if (cycle === 'monthly') return t('billing.billedMonthly');
-        if (cycle === 'quarterly') return t('billing.billedQuarterly');
+    const cycleKey = (plan: BoostPlanOffer['plan']) =>
+        plan === 'MONTHLY' ? 'monthly' : plan === 'QUARTERLY' ? 'quarterly' : 'yearly';
+    const cycleLabel = (plan: BoostPlanOffer['plan']) => t(`billing.${cycleKey(plan)}`);
+    const billedLabel = (plan: BoostPlanOffer['plan']) => {
+        if (plan === 'MONTHLY') return t('billing.billedMonthly');
+        if (plan === 'QUARTERLY') return t('billing.billedQuarterly');
         return t('billing.billedYearly');
     };
 
-    const openCheckout = (plan: BoostPlan) => {
-        setSelectedPlan(plan);
-        setCheckoutOpen(true);
-    };
-
-    const isActive = subscription?.status === 'ACTIVE';
+    const isActive = subscription?.active === true;
 
     return (
         <div className="space-y-8">
@@ -101,55 +128,55 @@ export default function BoostPage() {
                         <Sparkles className={cn('h-5 w-5', isActive ? 'text-emerald-500' : 'text-muted-foreground')} />
                         <div>
                             <p className="text-sm font-semibold">
-                                {t('currentPlan')} : {cycleLabel(subscription.cycle)}
+                                {t('currentPlan')} : {cycleLabel(subscription.billingCycle)}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                {isActive
+                                {isActive && subscription.expiresAt
                                     ? t('activeUntil', { date: formatDate(subscription.expiresAt) })
-                                    : tCommon('expired')}
+                                    : subscription.status === 'PENDING'
+                                        ? tPayment('pending')
+                                        : tCommon('expired')}
                             </p>
                         </div>
                     </div>
                     <Badge variant={isActive ? 'default' : 'secondary'}>
-                        {isActive ? tCommon('active') : tCommon('expired')}
+                        {isActive ? tCommon('active') : subscription.status === 'PENDING'
+                            ? tCommon('pending')
+                            : tCommon('expired')}
                     </Badge>
                 </div>
             )}
 
-            {/* Plans */}
+            {/* Formules — tarifs servis par le backend */}
             <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
-                {BOOST_PLANS.map((plan) => {
-                    const total = getBoostTotalPrice(plan);
-                    const monthlyEq = getBoostMonthlyEquivalent(plan);
-                    const discountPercent = getBoostDiscountPercent(plan);
-                    const isPopular = plan.cycle === 'yearly';
+                {catalog.boostPlans.map((plan) => {
+                    const isPopular = plan.plan === 'YEARLY';
 
                     return (
                         <div
-                            key={plan.cycle}
+                            key={plan.plan}
                             className={cn(
                                 'relative flex flex-col rounded-2xl border bg-card p-6 transition-all hover:shadow-soft',
                                 isPopular && 'border-primary shadow-soft ring-1 ring-primary/20'
                             )}
                         >
-                            {discountPercent > 0 && (
+                            {plan.discountPercent > 0 && (
                                 <Badge className="absolute -top-3 right-4 bg-emerald-600 hover:bg-emerald-600">
-                                    {t('billing.save', { percent: discountPercent })}
+                                    {t('billing.save', { percent: plan.discountPercent })}
                                 </Badge>
                             )}
 
-                            <h3 className="text-lg font-semibold mb-1">{cycleLabel(plan.cycle)}</h3>
-                            <p className="text-xs text-muted-foreground mb-4">{billedLabel(plan.cycle)}</p>
+                            <h3 className="text-lg font-semibold mb-1">{cycleLabel(plan.plan)}</h3>
+                            <p className="text-xs text-muted-foreground mb-4">{billedLabel(plan.plan)}</p>
 
                             <div className="mb-1">
-                                <span className="text-3xl font-bold">{formatPrice(total)}</span>
+                                <span className="text-3xl font-bold">{formatPrice(plan.totalPrice)}</span>
                             </div>
-                            {plan.months > 1 && (
+                            {plan.months > 1 ? (
                                 <p className="text-xs text-muted-foreground mb-4">
-                                    {t('equivalentPerMonth', { price: formatPrice(monthlyEq) })}
+                                    {t('equivalentPerMonth', { price: formatPrice(plan.monthlyEquivalent) })}
                                 </p>
-                            )}
-                            {plan.months === 1 && (
+                            ) : (
                                 <p className="text-xs text-muted-foreground mb-4">{tCommon('perMonth')}</p>
                             )}
 
@@ -165,7 +192,10 @@ export default function BoostPage() {
                             <Button
                                 className="w-full"
                                 variant={isPopular ? 'default' : 'outline'}
-                                onClick={() => openCheckout(plan)}
+                                onClick={() => {
+                                    setSelectedPlan(plan);
+                                    setCheckoutOpen(true);
+                                }}
                             >
                                 {t('subscribe')}
                             </Button>
@@ -174,36 +204,34 @@ export default function BoostPage() {
                 })}
             </div>
 
-            {/* Checkout */}
+            {/* Paiement */}
             {selectedPlan && (
                 <CheckoutModal
                     open={checkoutOpen}
                     onOpenChange={setCheckoutOpen}
                     title={t('checkoutTitle')}
-                    reference={`BOOST-${org.id}`}
                     lines={[
-                        { label: t('plan'), value: `Boost — ${cycleLabel(selectedPlan.cycle)}` },
+                        { label: t('plan'), value: `Boost — ${cycleLabel(selectedPlan.plan)}` },
                         { label: t('period'), value: t('billing.monthsShort', { count: selectedPlan.months }) },
-                        ...(getBoostDiscountPercent(selectedPlan) > 0
+                        ...(selectedPlan.discountPercent > 0
                             ? [{
                                 label: t('discount'),
-                                value: `-${getBoostDiscountPercent(selectedPlan)}%`,
+                                value: `-${selectedPlan.discountPercent}%`,
                                 highlight: true,
                             }]
                             : []),
                     ]}
-                    total={getBoostTotalPrice(selectedPlan)}
+                    total={selectedPlan.totalPrice}
                     footnote={t('renewalInfo')}
-                    onPaid={async (payment) => {
-                        await activateBoost({
-                            organizationId: org.id,
-                            cycle: selectedPlan.cycle,
-                            months: selectedPlan.months,
-                            amountPaid: getBoostTotalPrice(selectedPlan),
-                            payment,
-                        });
+                    onCheckout={(method, payerReference) =>
+                        billingApi.checkoutBoost(org.id, {
+                            plan: selectedPlan.plan,
+                            method,
+                            payerReference,
+                        })
+                    }
+                    onPaid={async () => {
                         await queryClient.invalidateQueries({ queryKey: ['boost-subscription', org.id] });
-                        toast.success(t('successToast'));
                     }}
                 />
             )}

@@ -371,8 +371,12 @@
         "phoneNumber": "Phone number",
         "phonePlaceholder": "6XX XX XX XX",
         "phoneInvalid": "Invalid phone number",
-        "demoNotice": "Demo mode: the payment API is not connected yet. The payment will be simulated.",
+        "redirecting": "Redirecting to your operator...",
+        "redirectNotice": "You will be redirected to your operator to securely confirm the payment.",
+        "verifying": "Verifying payment...",
         "success": "Payment completed successfully",
-        "failed": "Payment failed, please try again"
+        "failed": "Payment failed, please try again",
+        "cancelled": "Payment cancelled",
+        "pending": "Payment awaiting confirmation"
     }
 }

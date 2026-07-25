@@ -17,13 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils/cn';
 import { formatPrice } from '@/lib/utils/format';
-import {
-    initiatePayment,
-    isValidMomoNumber,
-    PAYMENTS_DEMO_MODE,
-    type PaymentMethod,
-    type PaymentResult,
-} from '@/lib/api/payments';
+import type { CheckoutResponse, PaymentMethod } from '@/lib/api/billing';
 
 export interface CheckoutLine {
     label: string;
@@ -37,19 +31,33 @@ interface CheckoutModalProps {
     title: string;
     /** Lignes du récapitulatif (formule, période, réduction…) */
     lines: CheckoutLine[];
-    /** Montant total en XAF */
+    /**
+     * Montant affiché, à titre indicatif. Le montant réellement encaissé est
+     * recalculé par le serveur — le client n'en envoie jamais.
+     */
     total: number;
-    /** Référence de paiement (ex: BOOST-xxx) */
-    reference: string;
-    /** Appelé après un paiement réussi */
-    onPaid: (payment: PaymentResult) => Promise<void> | void;
+    /**
+     * Lance l'encaissement côté serveur. Renvoie l'ordre de paiement, dont la
+     * redirectUrl vers le fournisseur.
+     */
+    onCheckout: (method: PaymentMethod, payerReference: string) => Promise<CheckoutResponse>;
+    /** Appelé quand le paiement est acquitté sans redirection (cas rare). */
+    onPaid?: () => Promise<void> | void;
     /** Note affichée sous le récapitulatif (ex: info renouvellement) */
     footnote?: string;
 }
 
+function isValidMomoNumber(phone: string): boolean {
+    const digits = phone.replace(/\D/g, '');
+    return /^6\d{8}$/.test(digits) || /^2376\d{8}$/.test(digits);
+}
+
 /**
- * Récapitulatif de commande + paiement Mobile Money.
- * En mode démo (API paiement non branchée), le paiement est simulé.
+ * Récapitulatif de commande puis paiement Mobile Money.
+ *
+ * Le paiement se conclut chez le fournisseur : on récupère une URL de paiement
+ * auprès du serveur et on y redirige l'utilisateur. La confirmation se fait au
+ * retour, côté page, en relisant le statut — jamais sur la seule redirection.
  */
 export function CheckoutModal({
     open,
@@ -57,53 +65,64 @@ export function CheckoutModal({
     title,
     lines,
     total,
-    reference,
+    onCheckout,
     onPaid,
     footnote,
 }: CheckoutModalProps) {
     const t = useTranslations('payment');
     const tCommon = useTranslations('common');
 
-    const [method, setMethod] = useState<PaymentMethod>('MTN_MOMO');
+    const [method, setMethod] = useState<PaymentMethod>('MOBILE_MONEY');
     const [phone, setPhone] = useState('');
     const [phoneError, setPhoneError] = useState(false);
     const [processing, setProcessing] = useState(false);
-
-    const methods: { id: PaymentMethod; label: string }[] = [
-        { id: 'MTN_MOMO', label: t('mtnMomo') },
-        { id: 'ORANGE_MONEY', label: t('orangeMoney') },
-    ];
+    const [redirecting, setRedirecting] = useState(false);
 
     const handlePay = async () => {
-        if (!isValidMomoNumber(phone)) {
+        if (method === 'MOBILE_MONEY' && !isValidMomoNumber(phone)) {
             setPhoneError(true);
             return;
         }
         setPhoneError(false);
         setProcessing(true);
         try {
-            const result = await initiatePayment({
-                amount: total,
-                method,
-                phoneNumber: phone,
-                reference,
-            });
-            if (result.status === 'SUCCESS') {
-                await onPaid(result);
+            const order = await onCheckout(method, phone.replace(/\D/g, ''));
+
+            if (order.redirectUrl) {
+                // Le fournisseur prend la main : on quitte l'application.
+                setRedirecting(true);
+                window.location.href = order.redirectUrl;
+                return;
+            }
+
+            if (order.status === 'SUCCESS') {
+                await onPaid?.();
                 toast.success(t('success'));
+                onOpenChange(false);
+            } else if (order.status === 'CANCELLED') {
+                toast.error(t('cancelled'));
+            } else if (order.status === 'PENDING') {
+                toast(t('pending'));
                 onOpenChange(false);
             } else {
                 toast.error(t('failed'));
             }
-        } catch {
-            toast.error(t('failed'));
+        } catch (error) {
+            const message = error instanceof Error ? error.message : t('failed');
+            toast.error(message || t('failed'));
         } finally {
             setProcessing(false);
         }
     };
 
+    const busy = processing || redirecting;
+
+    const methods: { id: PaymentMethod; label: string }[] = [
+        { id: 'MOBILE_MONEY', label: t('mtnMomo') },
+    ];
+
     return (
-        <Modal open={open} onOpenChange={processing ? () => undefined : onOpenChange}>
+        <Modal open={open} onOpenChange={busy ? () => undefined : onOpenChange}>
             <ModalHeader>
                 <ModalTitle>{title}</ModalTitle>
             </ModalHeader>
@@ -141,6 +160,7 @@ export function CheckoutModal({
                                 key={m.id}
                                 type="button"
                                 onClick={() => setMethod(m.id)}
+                                disabled={busy}
                                 className={cn(
                                     'flex items-center gap-2 rounded-lg border p-3 text-sm font-medium transition-colors',
                                     method === m.id
@@ -164,34 +184,32 @@ export function CheckoutModal({
                         placeholder={t('phonePlaceholder')}
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        disabled={processing}
+                        disabled={busy}
                     />
                     {phoneError && (
                         <p className="text-xs text-destructive">{t('phoneInvalid')}</p>
                     )}
                 </div>
 
-                {/* Notice mode démo */}
-                {PAYMENTS_DEMO_MODE && (
-                    <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
-                        <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                        <span>{t('demoNotice')}</span>
-                    </div>
-                )}
+                {/* Le paiement se finalise chez l'opérateur */}
+                <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
+                    <Info className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                    <span>{t('redirectNotice')}</span>
+                </div>
             </ModalBody>
             <ModalFooter className="gap-2">
                 <Button
                     variant="outline"
                     onClick={() => onOpenChange(false)}
-                    disabled={processing}
+                    disabled={busy}
                 >
                     {tCommon('cancel')}
                 </Button>
-                <Button onClick={handlePay} disabled={processing}>
-                    {processing ? (
+                <Button onClick={handlePay} disabled={busy}>
+                    {busy ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {t('processing')}
+                            {redirecting ? t('redirecting') : t('processing')}
                         </>
                     ) : (
                         t('payNow')

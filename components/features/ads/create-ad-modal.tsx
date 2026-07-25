@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Eye, ArrowLeft, ArrowRight, Building2, Link2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -20,13 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { CheckoutModal } from '@/components/features/billing/checkout-modal';
-import { adsApi } from '@/lib/api/ads';
-import {
-    AD_PLACEMENTS,
-    AD_DURATIONS,
-    getAdPriceQuote,
-    type AdPlacementId,
-} from '@/lib/constants/billing';
+import { billingApi, type AdPlacementCode } from '@/lib/api/billing';
 import { formatPrice } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
 
@@ -98,31 +92,27 @@ export function CreateAdModal({
         destinationKind === 'own_page' ? ownPageUrl : normalizeUrl(externalUrl);
 
     // Visibilité & durée
-    const [placement, setPlacement] = useState<AdPlacementId>('HOME_SIDEBAR');
+    const [placement, setPlacement] = useState<AdPlacementCode>('HOME_SIDEBAR');
     const [days, setDays] = useState(7);
 
-    const quote = getAdPriceQuote(placement, days);
-
-    const createMutation = useMutation({
-        mutationFn: () => {
-            const start = new Date();
-            const end = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
-            return adsApi.createAd(organizationId, {
-                title,
-                description: description || undefined,
-                imageUrl: imageUrl || undefined,
-                targetUrl,
-                adType: placement,
-                startDate: start.toISOString(),
-                endDate: end.toISOString(),
-            });
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['organization-ads', organizationId] });
-            toast.success(t('successToast'));
-            resetAndClose();
-        },
+    // Tarifs servis par le backend — le montant encaissé est de toute façon
+    // recalculé par le serveur, ce catalogue ne sert qu'à l'affichage.
+    const { data: catalog } = useQuery({
+        queryKey: ['billing-catalog'],
+        queryFn: billingApi.getCatalog,
+        staleTime: 30 * 60 * 1000,
     });
+
+    const placements = catalog?.adPlacements ?? [];
+    const durations = catalog?.adDurations ?? [];
+
+    const quote = (() => {
+        const rate = placements.find((p) => p.placement === placement)?.dailyRate ?? 0;
+        const discountPercent = durations.find((d) => d.days === days)?.discountPercent ?? 0;
+        const basePrice = rate * days;
+        const discountAmount = Math.round((basePrice * discountPercent) / 100);
+        return { basePrice, discountPercent, discountAmount, totalPrice: basePrice - discountAmount };
+    })();
 
     const resetAndClose = () => {
         setStep(1);
@@ -159,7 +149,7 @@ export function CreateAdModal({
         setStep(2);
     };
 
-    const placementName = (id: AdPlacementId) => t(`placements.${id}.name`);
+    const placementName = (id: AdPlacementCode) => t(`placements.${id}.name`);
 
     return (
         <>
@@ -272,14 +262,14 @@ export function CreateAdModal({
                             <div className="space-y-2">
                                 <Label>{t('form.chooseVisibility')}</Label>
                                 <div className="grid gap-2">
-                                    {AD_PLACEMENTS.map((p) => (
+                                    {placements.map((p) => (
                                         <button
-                                            key={p.id}
+                                            key={p.placement}
                                             type="button"
-                                            onClick={() => setPlacement(p.id)}
+                                            onClick={() => setPlacement(p.placement)}
                                             className={cn(
                                                 'flex items-center justify-between rounded-lg border p-3 text-left transition-colors',
-                                                placement === p.id
+                                                placement === p.placement
                                                     ? 'border-primary bg-primary/5'
                                                     : 'hover:bg-muted'
                                             )}
@@ -287,7 +277,7 @@ export function CreateAdModal({
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-sm font-medium">
-                                                        {t(`placements.${p.id}.name`)}
+                                                        {t(`placements.${p.placement}.name`)}
                                                     </span>
                                                     <span className="flex items-center gap-0.5">
                                                         {Array.from({ length: p.visibilityLevel }).map((_, i) => (
@@ -296,7 +286,7 @@ export function CreateAdModal({
                                                     </span>
                                                 </div>
                                                 <p className="text-xs text-muted-foreground truncate">
-                                                    {t(`placements.${p.id}.description`)}
+                                                    {t(`placements.${p.placement}.description`)}
                                                 </p>
                                             </div>
                                             <span className="ml-3 text-sm font-semibold whitespace-nowrap">
@@ -311,7 +301,7 @@ export function CreateAdModal({
                             <div className="space-y-2">
                                 <Label>{t('form.duration')}</Label>
                                 <div className="flex flex-wrap gap-2">
-                                    {AD_DURATIONS.map((d) => (
+                                    {durations.map((d) => (
                                         <button
                                             key={d.days}
                                             type="button"
@@ -386,7 +376,6 @@ export function CreateAdModal({
                 open={checkoutOpen}
                 onOpenChange={setCheckoutOpen}
                 title={t('checkoutTitle')}
-                reference={`AD-${organizationId}`}
                 lines={[
                     { label: t('campaign'), value: title || '—' },
                     { label: t('placement'), value: placementName(placement) },
@@ -400,8 +389,22 @@ export function CreateAdModal({
                         : []),
                 ]}
                 total={quote.totalPrice}
+                onCheckout={(method, payerReference) =>
+                    billingApi.checkoutAd(organizationId, {
+                        title,
+                        description: description || undefined,
+                        imageUrl: imageUrl || undefined,
+                        targetUrl,
+                        placement,
+                        days,
+                        method,
+                        payerReference,
+                    })
+                }
                 onPaid={async () => {
-                    await createMutation.mutateAsync();
+                    await queryClient.invalidateQueries({ queryKey: ['organization-ads', organizationId] });
+                    toast.success(t('successToast'));
+                    resetAndClose();
                 }}
             />
         </>

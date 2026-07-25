@@ -1,5 +1,5 @@
 import { post, get, put, del } from './client';
-import type { AdPlacementId } from '@/lib/constants/billing';
+import type { AdPlacementCode } from './billing';
 
 export interface Advertisement {
     id: string;
@@ -34,7 +34,7 @@ export interface CreateAdPayload {
     imageUrl?: string;
     targetUrl?: string;
     /** Emplacement / niveau de visibilité choisi */
-    adType: AdPlacementId;
+    adType: AdPlacementCode;
     startDate?: string;
     endDate?: string;
 }

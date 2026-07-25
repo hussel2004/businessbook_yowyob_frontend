@@ -4,26 +4,36 @@ import { NextIntlClientProvider } from 'next-intl';
 
 import BoostPage from '@/app/(dashboard)/organizations/[slug]/boost/page';
 import { getOrganizationBySlug } from '@/lib/api/public';
-import { getBoostSubscription } from '@/lib/api/boost';
-import {
-    BOOST_PLANS,
-    getBoostTotalPrice,
-    getBoostMonthlyEquivalent,
-    getBoostDiscountPercent,
-    getAdPriceQuote,
-} from '@/lib/constants/billing';
+import { billingApi } from '@/lib/api/billing';
 import frMessages from '@/messages/fr.json';
 
-// Mock dependencies
 jest.mock('next/navigation', () => ({
     useParams: () => ({ slug: 'my-org' }),
+    useRouter: () => ({ replace: jest.fn() }),
+    useSearchParams: () => new URLSearchParams(),
 }));
 
 jest.mock('@/lib/api/public');
-jest.mock('@/lib/api/boost', () => ({
-    getBoostSubscription: jest.fn(),
-    activateBoost: jest.fn(),
+jest.mock('@/lib/api/billing', () => ({
+    billingApi: {
+        getCatalog: jest.fn(),
+        getBoostSubscription: jest.fn(),
+        checkoutBoost: jest.fn(),
+        confirmBoost: jest.fn(),
+    },
 }));
+
+/** Catalogue tel que servi par le backend (tarifs alignés sur le kernel). */
+const catalog = {
+    currency: 'XAF',
+    boostPlans: [
+        { plan: 'MONTHLY', months: 1, totalPrice: 1000, discountPercent: 0, monthlyEquivalent: 1000 },
+        { plan: 'QUARTERLY', months: 3, totalPrice: 2800, discountPercent: 7, monthlyEquivalent: 933 },
+        { plan: 'YEARLY', months: 12, totalPrice: 10000, discountPercent: 17, monthlyEquivalent: 833 },
+    ],
+    adPlacements: [{ placement: 'POPUP', dailyRate: 500, visibilityLevel: 5 }],
+    adDurations: [{ days: 7, discountPercent: 0 }],
+};
 
 describe('Boost Page', () => {
     const Wrapper = ({ children }: { children: React.ReactNode }) => {
@@ -37,19 +47,16 @@ describe('Boost Page', () => {
         );
     };
 
-    const mockOrg = {
-        id: 'org-1',
-        longName: 'My Org',
-        slug: 'my-org',
-    };
+    const mockOrg = { id: 'org-1', longName: 'My Org', slug: 'my-org' };
 
     beforeEach(() => {
         jest.clearAllMocks();
         (getOrganizationBySlug as jest.Mock).mockResolvedValue(mockOrg);
+        (billingApi.getCatalog as jest.Mock).mockResolvedValue(catalog);
     });
 
-    it('affiche les trois formules quand aucun abonnement', async () => {
-        (getBoostSubscription as jest.Mock).mockResolvedValue(null);
+    it('affiche les formules servies par le backend', async () => {
+        (billingApi.getBoostSubscription as jest.Mock).mockResolvedValue(null);
 
         render(<BoostPage />, { wrapper: Wrapper });
 
@@ -61,15 +68,28 @@ describe('Boost Page', () => {
         expect(screen.getAllByRole('button', { name: /S'abonner/i })).toHaveLength(3);
     });
 
+    it('affiche les remises calculees par le backend', async () => {
+        (billingApi.getBoostSubscription as jest.Mock).mockResolvedValue(null);
+
+        render(<BoostPage />, { wrapper: Wrapper });
+
+        await waitFor(() => {
+            expect(screen.getByText('-7%')).toBeInTheDocument();
+        });
+        expect(screen.getByText('-17%')).toBeInTheDocument();
+    });
+
     it("affiche l'abonnement actif", async () => {
-        (getBoostSubscription as jest.Mock).mockResolvedValue({
+        (billingApi.getBoostSubscription as jest.Mock).mockResolvedValue({
+            id: 'sub-1',
             organizationId: 'org-1',
-            cycle: 'monthly',
-            amountPaid: 10000,
+            billingCycle: 'MONTHLY',
+            amountPaid: 1000,
+            currency: 'XAF',
+            status: 'ACTIVE',
+            active: true,
             startedAt: '2026-07-01T00:00:00Z',
             expiresAt: '2099-08-01T00:00:00Z',
-            transactionId: 'DEMO-1',
-            status: 'ACTIVE',
         });
 
         render(<BoostPage />, { wrapper: Wrapper });
@@ -79,43 +99,23 @@ describe('Boost Page', () => {
         });
         expect(screen.getByText(/Actif jusqu'au/i)).toBeInTheDocument();
     });
-});
 
-describe('Tarification Boost', () => {
-    it('reprend les tarifs du catalogue kernel', () => {
-        const [monthly, quarterly, yearly] = BOOST_PLANS;
+    it("n'affiche pas comme actif un abonnement en attente de paiement", async () => {
+        (billingApi.getBoostSubscription as jest.Mock).mockResolvedValue({
+            id: 'sub-2',
+            organizationId: 'org-1',
+            billingCycle: 'YEARLY',
+            amountPaid: 10000,
+            currency: 'XAF',
+            status: 'PENDING',
+            active: false,
+        });
 
-        // Catalogue kernel : 1 000 XAF/mois, 10 000 XAF/an
-        expect(getBoostTotalPrice(monthly!)).toBe(1_000);
-        expect(getBoostTotalPrice(yearly!)).toBe(10_000);
-        // Palier intermédiaire propre à BusinessBook (absent du kernel)
-        expect(getBoostTotalPrice(quarterly!)).toBe(2_800);
-    });
+        render(<BoostPage />, { wrapper: Wrapper });
 
-    it('dérive la remise affichée du prix réel', () => {
-        const [monthly, quarterly, yearly] = BOOST_PLANS;
-
-        expect(getBoostDiscountPercent(monthly!)).toBe(0);
-        // 3 000 -> 2 800 = -6,67 % arrondi à 7 %
-        expect(getBoostDiscountPercent(quarterly!)).toBe(7);
-        // 12 000 -> 10 000 = -16,67 % arrondi à 17 %
-        expect(getBoostDiscountPercent(yearly!)).toBe(17);
-
-        expect(getBoostMonthlyEquivalent(yearly!)).toBe(833);
-    });
-});
-
-describe('Tarification Publicités', () => {
-    it('calcule le montant selon emplacement et durée', () => {
-        // POPUP 500/j × 7 jours, pas de réduction
-        const q1 = getAdPriceQuote('POPUP', 7);
-        expect(q1.totalPrice).toBe(3_500);
-        expect(q1.discountPercent).toBe(0);
-
-        // HOME_SIDEBAR 200/j × 30 jours = 6 000, -10% → 5 400
-        const q2 = getAdPriceQuote('HOME_SIDEBAR', 30);
-        expect(q2.basePrice).toBe(6_000);
-        expect(q2.discountAmount).toBe(600);
-        expect(q2.totalPrice).toBe(5_400);
+        await waitFor(() => {
+            expect(screen.getByText(/Abonnement actuel/i)).toBeInTheDocument();
+        });
+        expect(screen.queryByText(/Actif jusqu'au/i)).not.toBeInTheDocument();
     });
 });
