@@ -1,7 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { CategoriesSection } from '@/components/features/home/categories-section';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getCategories } from '@/lib/api/public';
+import frMessages from '@/messages/fr.json';
 
 // Mock dependencies
 jest.mock('@/lib/api/public', () => ({
@@ -23,7 +25,9 @@ describe('CategoriesSection', () => {
     });
 
     const Wrapper = ({ children }: { children: React.ReactNode }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <NextIntlClientProvider locale="fr" messages={frMessages}>
+            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        </NextIntlClientProvider>
     );
 
     it('renders empty state/error when fetch fails', async () => {

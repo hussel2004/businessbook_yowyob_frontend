@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { BadgeCheck, MapPin } from 'lucide-react';
 import type { OrganizationSummary } from '@/lib/api/public';
@@ -11,6 +14,8 @@ interface SearchResultCardProps {
 }
 
 export function SearchResultCard({ org, viewMode }: SearchResultCardProps) {
+    const t = useTranslations('search');
+
     if (viewMode === 'list') {
         return (
             <Link
@@ -44,7 +49,7 @@ export function SearchResultCard({ org, viewMode }: SearchResultCardProps) {
 
                     <div className="flex items-center gap-2 mb-2">
                         <StarRating rating={org.averageRating ?? 0} size="sm" />
-                        <span className="text-sm text-muted-foreground">({org.reviewCount ?? 0} avis)</span>
+                        <span className="text-sm text-muted-foreground">({t('reviewsCount', { count: org.reviewCount ?? 0 })})</span>
                     </div>
 
                     {org.shortDescription && (

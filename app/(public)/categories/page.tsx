@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { getCategories, type Category } from '@/lib/api/public';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getAssetUrl } from '@/lib/api/endpoints';
@@ -16,6 +17,8 @@ function CategoryCardSkeleton() {
 }
 
 function CategoryCard({ category }: { category: Category }) {
+    const t = useTranslations('categories');
+
     return (
         <Link
             href={`/search?category=${category.slug}`}
@@ -37,7 +40,7 @@ function CategoryCard({ category }: { category: Category }) {
                         {category.name}
                     </h2>
                     <p className="text-xs text-white/80 mt-1 font-medium">
-                        {category.organizationCount ?? 0} entreprises
+                        {t('businessCount', { count: category.organizationCount ?? 0 })}
                     </p>
                 </div>
             </div>
@@ -46,6 +49,7 @@ function CategoryCard({ category }: { category: Category }) {
 }
 
 export default function CategoriesPage() {
+    const t = useTranslations('categories');
     const { data: categories, isLoading, error } = useQuery({
         queryKey: ['categories'],
         queryFn: getCategories,
@@ -57,11 +61,10 @@ export default function CategoriesPage() {
                 {/* Header */}
                 <div className="text-center mb-12">
                     <h1 className="text-3xl md:text-4xl font-bold mb-4">
-                        Toutes les catégories
+                        {t('pageTitle')}
                     </h1>
                     <p className="text-muted-foreground max-w-2xl mx-auto">
-                        Explorez notre annuaire par secteur d'activité et trouvez
-                        l'entreprise idéale pour vos besoins.
+                        {t('pageSubtitle')}
                     </p>
                 </div>
 
@@ -78,13 +81,13 @@ export default function CategoriesPage() {
                 {error && (
                     <div className="text-center py-12">
                         <p className="text-destructive mb-4">
-                            Une erreur est survenue lors du chargement des catégories.
+                            {t('loadError')}
                         </p>
                         <button
                             onClick={() => window.location.reload()}
                             className="text-primary hover:underline"
                         >
-                            Réessayer
+                            {t('retry')}
                         </button>
                     </div>
                 )}
@@ -101,9 +104,9 @@ export default function CategoriesPage() {
                 {/* Empty State */}
                 {!isLoading && !error && (!categories || categories.length === 0) && (
                     <div className="text-center py-20 border-2 border-dashed rounded-2xl">
-                        <h3 className="text-xl font-semibold mb-2">Aucune catégorie disponible</h3>
+                        <h3 className="text-xl font-semibold mb-2">{t('emptyTitle')}</h3>
                         <p className="text-muted-foreground">
-                            Les catégories seront bientôt disponibles.
+                            {t('emptyDescription')}
                         </p>
                     </div>
                 )}

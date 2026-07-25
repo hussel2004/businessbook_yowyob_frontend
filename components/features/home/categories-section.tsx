@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { Store, ArrowRight } from 'lucide-react';
 
 import { getCategories, type Category } from '@/lib/api/public';
@@ -10,6 +11,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getAssetUrl } from '@/lib/api/endpoints';
 
 function CategoryCard({ category }: { category: Category }) {
+    const t = useTranslations('categories');
+
     return (
         <Link
             href={`/categories/${category.slug}`}
@@ -41,7 +44,7 @@ function CategoryCard({ category }: { category: Category }) {
                     {category.name}
                 </h3>
                 <p className="text-xs text-white/80">
-                    {category.organizationCount || 0} entreprises
+                    {t('businessCount', { count: category.organizationCount || 0 })}
                 </p>
             </div>
         </Link>
@@ -59,6 +62,7 @@ function CategorySkeleton() {
 }
 
 export function CategoriesSection() {
+    const t = useTranslations('home.categories');
     const { data: categories, isLoading, error } = useQuery({
         queryKey: ['categories'],
         queryFn: getCategories,
@@ -72,17 +76,17 @@ export function CategoriesSection() {
                 <div className="flex items-end justify-between mb-10">
                     <div>
                         <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                            Parcourir par catégorie
+                            {t('title')}
                         </h2>
                         <p className="text-muted-foreground">
-                            Explorez les entreprises par secteur d'activité
+                            {t('subtitle')}
                         </p>
                     </div>
                     <Link
                         href="/categories"
                         className="hidden md:flex items-center gap-2 text-primary font-medium hover:underline"
                     >
-                        Voir toutes les catégories
+                        {t('seeAll')}
                         <ArrowRight className="h-4 w-4" />
                     </Link>
                 </div>
@@ -96,7 +100,7 @@ export function CategoriesSection() {
                     </div>
                 ) : error ? (
                     <div className="text-center py-12 text-muted-foreground">
-                        Impossible de charger les catégories
+                        {t('loadError')}
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -112,7 +116,7 @@ export function CategoriesSection() {
                         href="/categories"
                         className="inline-flex items-center gap-2 text-primary font-medium hover:underline"
                     >
-                        Voir toutes les catégories
+                        {t('seeAll')}
                         <ArrowRight className="h-4 w-4" />
                     </Link>
                 </div>

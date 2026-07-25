@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { MapView } from '@/components/features/map/map-view';
 import { searchOrganizations } from '@/lib/api/public';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
@@ -37,6 +38,7 @@ function SearchResultsSkeleton({ viewMode }: { viewMode: 'grid' | 'list' | 'map'
 }
 
 export function SearchResults({ viewMode, filterModes = ['all'] }: SearchResultsProps) {
+    const t = useTranslations('search');
     const searchParams = useSearchParams();
     const page = Number(searchParams.get('page')) || 0;
     const pageSize = 12;
@@ -107,8 +109,8 @@ export function SearchResults({ viewMode, filterModes = ['all'] }: SearchResults
         return (
             <EmptyState
                 icon="error"
-                title="Une erreur est survenue"
-                description="Impossible de charger les résultats de recherche."
+                title={t('errorTitle')}
+                description={t('loadError')}
             />
         );
     }
@@ -117,10 +119,10 @@ export function SearchResults({ viewMode, filterModes = ['all'] }: SearchResults
         return (
             <EmptyState
                 icon="search"
-                title="Aucun résultat trouvé"
-                description="Essayez de modifier vos filtres ou vos termes de recherche."
+                title={t('noResultsTitle')}
+                description={t('noResultsHint')}
                 action={{
-                    label: 'Effacer les filtres',
+                    label: t('clearFilters'),
                     onClick: () => window.location.href = '/search',
                 }}
             />
@@ -131,7 +133,7 @@ export function SearchResults({ viewMode, filterModes = ['all'] }: SearchResults
         return (
             <div className="h-[600px] w-full relative">
                 <div className="absolute top-4 left-4 z-10 bg-background/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium border shadow-sm">
-                    {organizations.length} résultat{organizations.length !== 1 ? 's' : ''} trouvé{organizations.length !== 1 ? 's' : ''}
+                    {t('resultsFound', { count: organizations.length })}
                 </div>
                 <MapView agencies={organizations.map(org => ({
                     id: org.id,

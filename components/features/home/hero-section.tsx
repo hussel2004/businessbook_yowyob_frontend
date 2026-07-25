@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search, MapPin, Building2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { useDebounce } from '@/lib/hooks/use-debounce';
 import { getSearchSuggestions } from '@/lib/api/public';
 
 export function HeroSection() {
+    const t = useTranslations('home.hero');
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('');
@@ -55,19 +57,18 @@ export function HeroSection() {
                     {/* Badge */}
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 animate-fade-in">
                         <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        L'annuaire de confiance
+                        {t('badge')}
                     </div>
 
                     {/* Title */}
                     <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                        Trouvez des entreprises{' '}
-                        <span className="text-gradient-primary">africaines certifiées</span>
+                        {t('titleStart')}{' '}
+                        <span className="text-gradient-primary">{t('titleHighlight')}</span>
                     </h1>
 
                     {/* Subtitle */}
                     <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-                        Découvrez, vérifiez et contactez des entreprises camerounaises de confiance.
-                        Recherchez par nom, catégorie ou localisation.
+                        {t('subtitle')}
                     </p>
 
                     {/* Search Form */}
@@ -77,7 +78,7 @@ export function HeroSection() {
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                 <Input
                                     type="text"
-                                    placeholder="Nom d'entreprise, service..."
+                                    placeholder={t('searchPlaceholder')}
                                     value={searchQuery}
                                     onChange={(e) => {
                                         setSearchQuery(e.target.value);
@@ -109,7 +110,7 @@ export function HeroSection() {
                                 <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                 <Input
                                     type="text"
-                                    placeholder="Douala, Yaoundé..."
+                                    placeholder={t('locationPlaceholder')}
                                     value={location}
                                     onChange={(e) => setLocation(e.target.value)}
                                     className="pl-12 h-14 text-base border-0 focus-visible:ring-0 shadow-none bg-transparent"
@@ -117,25 +118,25 @@ export function HeroSection() {
                             </div>
                             <Button type="submit" size="lg" className="h-14 px-8">
                                 <Search className="h-5 w-5 md:mr-2" />
-                                <span className="hidden md:inline">Rechercher</span>
+                                <span className="hidden md:inline">{t('searchButton')}</span>
                             </Button>
                         </div>
                     </form>
 
                     {/* Quick Links */}
                     <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <span>Populaires:</span>
+                        <span>{t('popular')}</span>
                         <Link href="/search?category=restaurants" className="px-3 py-1 rounded-full bg-muted hover:bg-muted/80 transition-colors">
-                            Restaurants
+                            {t('popularRestaurants')}
                         </Link>
                         <Link href="/search?category=hotels" className="px-3 py-1 rounded-full bg-muted hover:bg-muted/80 transition-colors">
-                            Hôtels
+                            {t('popularHotels')}
                         </Link>
                         <Link href="/search?category=banks" className="px-3 py-1 rounded-full bg-muted hover:bg-muted/80 transition-colors">
-                            Banques
+                            {t('popularBanks')}
                         </Link>
                         <Link href="/search?category=health" className="px-3 py-1 rounded-full bg-muted hover:bg-muted/80 transition-colors">
-                            Santé
+                            {t('popularHealth')}
                         </Link>
                     </div>
                 </div>
@@ -152,10 +153,10 @@ export function HeroSection() {
                             </div>
                             <div className="flex-1">
                                 <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">
-                                    Trouver une entreprise
+                                    {t('findBusiness')}
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
-                                    Parcourez notre annuaire d'entreprises vérifiées
+                                    {t('findBusinessDesc')}
                                 </p>
                             </div>
                             <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -171,10 +172,10 @@ export function HeroSection() {
                             </div>
                             <div className="flex-1">
                                 <h3 className="font-semibold mb-1 group-hover:text-secondary transition-colors">
-                                    Inscrire mon entreprise
+                                    {t('registerBusiness')}
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
-                                    Rejoignez l'annuaire et atteignez de nouveaux clients
+                                    {t('registerBusinessDesc')}
                                 </p>
                             </div>
                             <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-1 transition-all" />

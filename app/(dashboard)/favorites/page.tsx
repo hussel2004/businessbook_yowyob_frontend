@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { get } from '@/lib/api/client';
 import { ENDPOINTS, getAssetUrl } from '@/lib/api/endpoints';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import type { OrganizationSummary } from '@/lib/api/public';
 import { EmptyState } from '@/components/ui/empty-state';
 
 export default function FavoritesPage() {
+    const t = useTranslations('favorites');
     const { data: favorites, isLoading } = useQuery({
         queryKey: ['my-favorites'],
         queryFn: () => get<OrganizationSummary[]>(ENDPOINTS.FAVORITES.BASE),
@@ -20,9 +22,9 @@ export default function FavoritesPage() {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Mes Favoris</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
                 <p className="text-muted-foreground">
-                    Retrouvez ici les entreprises que vous avez sauvegardées.
+                    {t('subtitle')}
                 </p>
             </div>
 
@@ -35,10 +37,10 @@ export default function FavoritesPage() {
             ) : favorites?.length === 0 ? (
                 <EmptyState
                     icon={Heart}
-                    title="Aucun favori"
-                    description="Vous n'avez pas encore ajouté d'entreprise à vos favoris."
+                    title={t('emptyTitle')}
+                    description={t('emptyDescription')}
                     action={{
-                        label: 'Explorer les entreprises',
+                        label: t('explore'),
                         onClick: () => window.location.href = '/search',
                     }}
                 />

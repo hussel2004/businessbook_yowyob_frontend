@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations, useLocale } from 'next-intl';
 import { Tag, Calendar, ArrowRight, Percent, Gift } from 'lucide-react';
 
 import { getFeaturedPromotions, type Promotion } from '@/lib/api/public';
@@ -10,30 +11,31 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { getAssetUrl } from '@/lib/api/endpoints';
 
-function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-        day: 'numeric',
-        month: 'short',
-    });
-}
-
-function getDiscountLabel(promo: Promotion): string {
-    switch (promo.discountType) {
-        case 'PERCENTAGE':
-            return `-${promo.discountValue}%`;
-        case 'FIXED_AMOUNT':
-            return `-${promo.discountValue} FCFA`;
-        case 'BOGO':
-            return '1+1 Gratuit';
-        case 'FREE_ITEM':
-            return 'Cadeau offert';
-        default:
-            return 'Offre spéciale';
-    }
-}
-
 function PromotionCard({ promo }: { promo: Promotion }) {
-    const discountLabel = getDiscountLabel(promo);
+    const t = useTranslations('home.promotions');
+    const locale = useLocale();
+
+    const formatDate = (dateString: string) =>
+        new Date(dateString).toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR', {
+            day: 'numeric',
+            month: 'short',
+        });
+
+    const discountLabel = (() => {
+        switch (promo.discountType) {
+            case 'PERCENTAGE':
+                return `-${promo.discountValue}%`;
+            case 'FIXED_AMOUNT':
+                return `-${promo.discountValue} FCFA`;
+            case 'BOGO':
+                return t('bogo');
+            case 'FREE_ITEM':
+                return t('freeItem');
+            default:
+                return t('specialOffer');
+        }
+    })();
+
     const daysLeft = Math.ceil((new Date(promo.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
     return (
@@ -68,7 +70,7 @@ function PromotionCard({ promo }: { promo: Promotion }) {
                 {daysLeft > 0 && daysLeft <= 7 && (
                     <div className="absolute top-4 right-4">
                         <Badge variant="destructive" className="text-xs">
-                            {daysLeft} jour{daysLeft > 1 ? 's' : ''} restant{daysLeft > 1 ? 's' : ''}
+                            {t('daysLeft', { count: daysLeft })}
                         </Badge>
                     </div>
                 )}
@@ -105,7 +107,7 @@ function PromotionCard({ promo }: { promo: Promotion }) {
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        Jusqu'au {formatDate(promo.endDate)}
+                        {t('until', { date: formatDate(promo.endDate) })}
                     </div>
                     {promo.code && (
                         <div className="flex items-center gap-1 font-mono bg-muted px-2 py-0.5 rounded">
@@ -141,6 +143,7 @@ function PromotionSkeleton() {
 }
 
 export function PromotionsSection() {
+    const t = useTranslations('home.promotions');
     const { data: promotions, isLoading, error } = useQuery({
         queryKey: ['promotions', 'featured'],
         queryFn: () => getFeaturedPromotions(6),
@@ -159,20 +162,20 @@ export function PromotionsSection() {
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 text-secondary text-sm font-medium mb-3">
                             <Percent className="h-4 w-4" />
-                            Offres du moment
+                            {t('badge')}
                         </div>
                         <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                            Promotions actives
+                            {t('title')}
                         </h2>
                         <p className="text-muted-foreground">
-                            Profitez des meilleures offres de nos entreprises partenaires
+                            {t('subtitle')}
                         </p>
                     </div>
                     <Link
                         href="/promotions"
                         className="hidden md:flex items-center gap-2 text-primary font-medium hover:underline"
                     >
-                        Toutes les promotions
+                        {t('seeAll')}
                         <ArrowRight className="h-4 w-4" />
                     </Link>
                 </div>
@@ -186,7 +189,7 @@ export function PromotionsSection() {
                     </div>
                 ) : error ? (
                     <div className="text-center py-12 text-muted-foreground">
-                        Impossible de charger les promotions
+                        {t('loadError')}
                     </div>
                 ) : (
                     <div className="flex gap-6 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
@@ -202,7 +205,7 @@ export function PromotionsSection() {
                         href="/promotions"
                         className="inline-flex items-center gap-2 text-primary font-medium hover:underline"
                     >
-                        Toutes les promotions
+                        {t('seeAll')}
                         <ArrowRight className="h-4 w-4" />
                     </Link>
                 </div>

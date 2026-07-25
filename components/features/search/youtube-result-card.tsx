@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { OrganizationSummary } from '@/lib/api/public';
 import { Badge } from '@/components/ui/badge';
 import { BadgeCheck, Star, MapPin } from 'lucide-react';
@@ -11,6 +12,7 @@ interface YouTubeResultCardProps {
 }
 
 export function YouTubeResultCard({ org }: YouTubeResultCardProps) {
+    const t = useTranslations('search');
     // Use the appropriate name fields from backend
     const displayName = org.shortName || org.longName || org.name || 'Sans nom';
     const fullName = org.longName || org.name || displayName;
@@ -29,7 +31,7 @@ export function YouTubeResultCard({ org }: YouTubeResultCardProps) {
                 {/* Verified Badge - Top Right with Blue Checkmark */}
                 {org.isVerified && (
                     <div className="absolute top-2 right-2">
-                        <div className="bg-blue-500 text-white p-1.5 rounded-full shadow-lg" title="Entreprise Vérifiée">
+                        <div className="bg-blue-500 text-white p-1.5 rounded-full shadow-lg" title={t('verifiedBusiness')}>
                             <BadgeCheck className="h-4 w-4" />
                         </div>
                     </div>
@@ -72,7 +74,7 @@ export function YouTubeResultCard({ org }: YouTubeResultCardProps) {
 
                     {/* Inline Verified Icon */}
                     {org.isVerified && (
-                        <span title="Vérifié">
+                        <span title={t('verified')}>
                             <BadgeCheck className="h-4 w-4 text-blue-500" />
                         </span>
                     )}
@@ -81,7 +83,7 @@ export function YouTubeResultCard({ org }: YouTubeResultCardProps) {
 
                 {/* Metadata Row */}
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                    <span>{org.reviewCount ?? 0} avis</span>
+                    <span>{t('reviewsCount', { count: org.reviewCount ?? 0 })}</span>
                     <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/50" />
                     {org.city && (
                         <span className="flex items-center gap-1">
@@ -102,7 +104,7 @@ export function YouTubeResultCard({ org }: YouTubeResultCardProps) {
                 <div className="mt-3 flex items-center gap-2">
                     <Link href={`/business/${org.slug}`}>
                         <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 font-medium">
-                            Voir le profil
+                            {t('viewProfile')}
                         </Badge>
                     </Link>
                 </div>
