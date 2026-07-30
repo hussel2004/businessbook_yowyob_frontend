@@ -7,8 +7,8 @@ const nextConfig = {
         ignoreDuringBuilds: true,
     },
 
-    // Standalone build - only for Docker, not Vercel
-    // output: 'standalone',
+    // Standalone build - image Docker de prod (YowYob infra), pas Vercel
+    output: 'standalone',
 
     // Image optimization domains
     images: {

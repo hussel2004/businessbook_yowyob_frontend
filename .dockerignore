@@ -6,6 +6,8 @@
 !components
 !lib
 !types
+!i18n
+!messages
 !public
 !package.json
 !package-lock.json
@@ -15,9 +17,7 @@
 !tailwind.config.ts
 !postcss.config.js
 
-# Exclude development/test files
-!node_modules/
-!.next
+# Exclude development/test files (rebuilt inside the image, never sent as context)
 coverage/
 test-results/
 playwright-report/

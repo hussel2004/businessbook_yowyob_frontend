@@ -1,28 +1,48 @@
 # =============================================================================
-# BUSINESSBOOK FRONTEND - Local Build Dockerfile (Fast)
+# BUSINESSBOOK FRONTEND - Production Dockerfile (multi-stage, CI-cachable)
 # =============================================================================
 
-FROM node:20-alpine
+# --- deps -------------------------------------------------------------------
+# Layer isolee sur le lockfile : Docker ne relance npm ci que si
+# package-lock.json change, au lieu de retelecharger node_modules a chaque
+# build.
+FROM node:20-alpine AS deps
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
 
+# --- builder ------------------------------------------------------------
+FROM node:20-alpine AS builder
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Variables NEXT_PUBLIC_* : injectees au build, pas au runtime
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_ORS_API_KEY
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
+    NEXT_PUBLIC_ORS_API_KEY=$NEXT_PUBLIC_ORS_API_KEY
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+# --- runner -------------------------------------------------------------
+# Image finale : uniquement la sortie standalone (node_modules trace, pas
+# le node_modules complet).
+FROM node:20-alpine AS runner
+WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Install necessary descriptors (but skip npm ci)
-COPY package.json package-lock.json ./
-# RUN npm ci --only=production
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
-# Copy locally built artifacts and dependencies
-COPY node_modules ./node_modules
-COPY .next ./.next
-COPY public ./public
-
-# Expose port
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Start the application
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
