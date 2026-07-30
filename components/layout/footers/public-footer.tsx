@@ -1,11 +1,21 @@
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Logo } from '@/components/layout/logo';
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Mail, Phone, MapPin } from 'lucide-react';
+import type { Locale } from '@/i18n/config';
+import { COMPANY, COMPANY_ADDRESS_LINE, getContactChannel, PHONE_NUMBERS, SOCIAL_LINKS } from '@/lib/legal';
+
+const SOCIAL_ICONS = {
+    Facebook,
+    X: Twitter,
+    Instagram,
+} as const;
 
 export function PublicFooter() {
     const currentYear = new Date().getFullYear();
     const t = useTranslations('footer');
+    const locale = useLocale() as Locale;
+    const generalContact = getContactChannel('general');
 
     return (
         <footer className="bg-muted/50 border-t pt-16 pb-8">
@@ -18,18 +28,21 @@ export function PublicFooter() {
                             {t('tagline')}
                         </p>
                         <div className="flex gap-4">
-                            <a href="#" className="text-foreground-muted hover:text-primary transition-colors">
-                                <Facebook className="h-5 w-5" />
-                            </a>
-                            <a href="#" className="text-foreground-muted hover:text-primary transition-colors">
-                                <Twitter className="h-5 w-5" />
-                            </a>
-                            <a href="#" className="text-foreground-muted hover:text-primary transition-colors">
-                                <Instagram className="h-5 w-5" />
-                            </a>
-                            <a href="#" className="text-foreground-muted hover:text-primary transition-colors">
-                                <Linkedin className="h-5 w-5" />
-                            </a>
+                            {SOCIAL_LINKS.map((social) => {
+                                const Icon = SOCIAL_ICONS[social.name];
+                                return (
+                                    <a
+                                        key={social.name}
+                                        href={social.href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label={social.name}
+                                        className="text-foreground-muted hover:text-primary transition-colors"
+                                    >
+                                        <Icon className="h-5 w-5" />
+                                    </a>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -88,22 +101,42 @@ export function PublicFooter() {
                         <ul className="space-y-3 text-sm">
                             <li className="flex items-start gap-3">
                                 <MapPin className="h-5 w-5 text-primary shrink-0" />
-                                <span className="text-foreground-muted">Akwa, Douala, Cameroun</span>
+                                <span className="text-foreground-muted">
+                                    {COMPANY_ADDRESS_LINE}, {COMPANY.address.country[locale]}
+                                </span>
                             </li>
-                            <li className="flex items-center gap-3">
+                            <li className="flex items-start gap-3">
                                 <Phone className="h-5 w-5 text-primary shrink-0" />
-                                <span className="text-foreground-muted">+237 6XX XX XX XX</span>
+                                <span className="flex flex-col">
+                                    {PHONE_NUMBERS.map((phone) => (
+                                        <a
+                                            key={phone.href}
+                                            href={phone.href}
+                                            className="text-foreground-muted hover:text-primary transition-colors"
+                                        >
+                                            {phone.display}
+                                        </a>
+                                    ))}
+                                </span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail className="h-5 w-5 text-primary shrink-0" />
-                                <span className="text-foreground-muted">contact@businessbook.cm</span>
+                                <a
+                                    href={`mailto:${generalContact.email}`}
+                                    className="text-foreground-muted hover:text-primary transition-colors"
+                                >
+                                    {generalContact.email}
+                                </a>
                             </li>
                         </ul>
                     </div>
                 </div>
 
                 <div className="border-t pt-8 text-center text-sm text-foreground-muted">
-                    <p>&copy; {currentYear} YowYob Inc. Ltd. {t('rights')}</p>
+                    <p>&copy; {currentYear} {COMPANY.name}. {t('rights')}</p>
+                    <p className="mt-1 text-xs">
+                        RCCM {COMPANY.rccm} · NIU {COMPANY.taxId}
+                    </p>
                 </div>
             </div>
         </footer>
