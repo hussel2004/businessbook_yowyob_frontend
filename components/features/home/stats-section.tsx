@@ -1,6 +1,7 @@
 'use client';
 
 import { Building2, Users, Star, BadgeCheck } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface StatItem {
     icon: React.ReactNode;
@@ -9,44 +10,45 @@ interface StatItem {
     color: string;
 }
 
-const stats: StatItem[] = [
-    {
-        icon: <Building2 className="h-6 w-6" />,
-        value: '5,000+',
-        label: 'Entreprises enregistrées',
-        color: 'text-primary',
-    },
-    {
-        icon: <BadgeCheck className="h-6 w-6" />,
-        value: '1,000+',
-        label: 'Entreprises certifiées',
-        color: 'text-emerald-600 dark:text-emerald-400',
-    },
-    {
-        icon: <Star className="h-6 w-6" />,
-        value: '25,000+',
-        label: 'Avis vérifiés',
-        color: 'text-yellow-600 dark:text-yellow-400',
-    },
-    {
-        icon: <Users className="h-6 w-6" />,
-        value: '50,000+',
-        label: 'Utilisateurs actifs',
-        color: 'text-secondary',
-    },
-];
-
 export function StatsSection() {
+    const t = useTranslations('home.stats');
+
+    const stats: StatItem[] = [
+        {
+            icon: <Building2 className="h-6 w-6" />,
+            value: '5,000+',
+            label: t('registered'),
+            color: 'text-primary',
+        },
+        {
+            icon: <BadgeCheck className="h-6 w-6" />,
+            value: '1,000+',
+            label: t('certified'),
+            color: 'text-emerald-600 dark:text-emerald-400',
+        },
+        {
+            icon: <Star className="h-6 w-6" />,
+            value: '25,000+',
+            label: t('reviews'),
+            color: 'text-yellow-600 dark:text-yellow-400',
+        },
+        {
+            icon: <Users className="h-6 w-6" />,
+            value: '50,000+',
+            label: t('users'),
+            color: 'text-secondary',
+        },
+    ];
+
     return (
         <section className="py-16 md:py-24 bg-muted/30">
             <div className="container-wrapper">
                 <div className="text-center mb-12">
                     <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                        La confiance en chiffres
+                        {t('title')}
                     </h2>
                     <p className="text-muted-foreground max-w-xl mx-auto">
-                        BusinessBook est la plateforme de référence pour découvrir et connecter
-                        avec des entreprises africaines de confiance
+                        {t('subtitle')}
                     </p>
                 </div>
 

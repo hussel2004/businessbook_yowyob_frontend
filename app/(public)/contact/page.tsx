@@ -1,38 +1,50 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { COMPANY, COMPANY_ADDRESS_LINE, getContactChannel, PHONE_NUMBERS } from '@/lib/legal';
 
 export const metadata: Metadata = {
     title: 'Contact - BusinessBook',
     description: 'Contactez l\'équipe BusinessBook. Nous sommes là pour répondre à vos questions.',
 };
 
+const generalContact = getContactChannel('general');
+
 const contactInfo = [
     {
         icon: Mail,
         label: 'Email',
-        value: 'contact@businessbook.cm',
-        href: 'mailto:contact@businessbook.cm',
+        value: generalContact.email,
+        href: `mailto:${generalContact.email}`,
     },
     {
         icon: Phone,
         label: 'Téléphone',
-        value: '+237 6XX XXX XXX',
-        href: 'tel:+2376XXXXXXXX',
+        value: PHONE_NUMBERS[0].display,
+        href: PHONE_NUMBERS[0].href,
+        secondary: { value: PHONE_NUMBERS[1].display, href: PHONE_NUMBERS[1].href },
     },
     {
         icon: MapPin,
-        label: 'Adresse',
-        value: 'Douala, Cameroun',
+        label: 'Siège social',
+        value: `${COMPANY_ADDRESS_LINE}, ${COMPANY.address.country.fr}`,
     },
     {
         icon: Clock,
         label: 'Horaires',
         value: 'Lun - Ven: 8h - 18h',
     },
+];
+
+/** Canaux spécialisés, alignés sur le package légal BusinessBook v1.0. */
+const specializedChannels = [
+    { ...getContactChannel('legal'), href: '/terms' },
+    { ...getContactChannel('privacy'), href: '/privacy' },
+    { ...getContactChannel('support'), href: null },
 ];
 
 export default function ContactPage() {
@@ -66,19 +78,46 @@ export default function ContactPage() {
                                         ) : (
                                             <div className="font-medium">{info.value}</div>
                                         )}
+                                        {info.secondary && (
+                                            <a
+                                                href={info.secondary.href}
+                                                className="block font-medium hover:text-primary transition-colors"
+                                            >
+                                                {info.secondary.value}
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
                             ))}
                         </div>
 
                         <div className="mt-8 p-6 rounded-xl bg-muted/50">
-                            <h3 className="font-semibold mb-2">Support Entreprises</h3>
-                            <p className="text-sm text-muted-foreground mb-3">
-                                Pour les questions liées à votre compte entreprise, contactez notre équipe dédiée.
+                            <h3 className="font-semibold mb-1">Demandes spécifiques</h3>
+                            <p className="text-sm text-muted-foreground mb-4">
+                                Ces canaux dédiés traitent plus vite les demandes juridiques, de confidentialité et de sécurité.
                             </p>
-                            <a href="mailto:business@businessbook.cm" className="text-primary font-medium hover:underline">
-                                business@businessbook.cm
-                            </a>
+                            <ul className="space-y-4">
+                                {specializedChannels.map((channel) => (
+                                    <li key={channel.purpose}>
+                                        <div className="text-sm font-medium">{channel.label.fr}</div>
+                                        <p className="text-sm text-muted-foreground">{channel.description.fr}</p>
+                                        <a
+                                            href={`mailto:${channel.email}`}
+                                            className="text-sm text-primary font-medium hover:underline"
+                                        >
+                                            {channel.email}
+                                        </a>
+                                        {channel.href && (
+                                            <>
+                                                <span className="mx-2 text-sm text-muted-foreground">·</span>
+                                                <Link href={channel.href} className="text-sm text-primary hover:underline">
+                                                    Consulter le document
+                                                </Link>
+                                            </>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
                     </div>
 

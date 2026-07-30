@@ -5,6 +5,7 @@ import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
+import { useTranslations } from 'next-intl';
 import { getAccessToken } from '@/lib/auth/storage';
 import { getApiBaseUrl, getAssetUrl } from '@/lib/api/endpoints';
 
@@ -16,6 +17,7 @@ interface ImageUploadProps {
 }
 
 export function ImageUpload({ value, onChange, category = 'services', className }: ImageUploadProps) {
+    const t = useTranslations('upload');
     const [isUploading, setIsUploading] = useState(false);
     const [preview, setPreview] = useState<string | null>(value || null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -31,13 +33,13 @@ export function ImageUpload({ value, onChange, category = 'services', className 
 
         // Validate file type
         if (!file.type.startsWith('image/')) {
-            toast.error('Veuillez sélectionner une image');
+            toast.error(t('selectImage'));
             return;
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            toast.error('L\'image ne doit pas dépasser 5 Mo');
+            toast.error(t('tooLarge'));
             return;
         }
 
@@ -50,7 +52,7 @@ export function ImageUpload({ value, onChange, category = 'services', className 
         try {
             const token = getAccessToken();
             if (!token) {
-                toast.error('Vous devez être connecté pour télécharger une image');
+                toast.error(t('loginRequired'));
                 setPreview(value || null);
                 setIsUploading(false);
                 return;
@@ -117,10 +119,10 @@ export function ImageUpload({ value, onChange, category = 'services', className 
             // 3. Update parent with URL
             onChange(finalUrl);
             setPreview(finalUrl);
-            toast.success('Image téléchargée');
+            toast.success(t('success'));
         } catch (error) {
             console.error('Upload error:', error);
-            toast.error('Erreur lors du téléchargement');
+            toast.error(t('error'));
             setPreview(value || null);
         } finally {
             setIsUploading(false);
@@ -189,8 +191,8 @@ export function ImageUpload({ value, onChange, category = 'services', className 
                                 <Upload className="h-6 w-6" />
                             </div>
                             <div className="text-center">
-                                <p className="text-sm font-medium">Cliquez pour télécharger</p>
-                                <p className="text-xs">PNG, JPG jusqu'à 5 Mo</p>
+                                <p className="text-sm font-medium">{t('clickToUpload')}</p>
+                                <p className="text-xs">{t('fileHint')}</p>
                             </div>
                         </>
                     )}

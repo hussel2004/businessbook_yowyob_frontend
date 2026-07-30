@@ -9,17 +9,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { updateProfile } from '@/lib/api/profile';
 import { useMutation } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import toast from 'react-hot-toast';
 
-const profileSchema = z.object({
-    firstName: z.string().min(1, 'Prénom requis'),
-    lastName: z.string().min(1, 'Nom requis'),
-});
-
-type ProfileFormValues = z.infer<typeof profileSchema>;
+type ProfileFormValues = {
+    firstName: string;
+    lastName: string;
+};
 
 export default function ProfilePage() {
+    const t = useTranslations('profile');
     const { user, updateUser } = useAuthStore();
+
+    // Messages de validation résolus à chaque rendu pour suivre la langue active
+    const profileSchema = z.object({
+        firstName: z.string().min(1, t('firstNameRequired')),
+        lastName: z.string().min(1, t('lastNameRequired')),
+    });
 
     const { register, handleSubmit, formState: { errors } } = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
@@ -32,13 +38,13 @@ export default function ProfilePage() {
     const mutation = useMutation({
         mutationFn: updateProfile,
         onSuccess: (updatedUser) => {
-            toast.success('Profil mis à jour');
+            toast.success(t('updated'));
             if (user) {
                 updateUser(updatedUser);
             }
         },
         onError: () => {
-            toast.error('Erreur lors de la mise à jour');
+            toast.error(t('updateError'));
         }
     });
 
@@ -49,9 +55,9 @@ export default function ProfilePage() {
     return (
         <div className="max-w-xl">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold tracking-tight">Mon Profil</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
                 <p className="text-muted-foreground">
-                    Gérez vos informations personnelles.
+                    {t('subtitle')}
                 </p>
             </div>
 
@@ -59,26 +65,26 @@ export default function ProfilePage() {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="firstName">Prénom</Label>
+                            <Label htmlFor="firstName">{t('firstName')}</Label>
                             <Input id="firstName" {...register('firstName')} />
                             {errors.firstName && <span className="text-xs text-destructive">{errors.firstName.message}</span>}
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="lastName">Nom</Label>
+                            <Label htmlFor="lastName">{t('lastName')}</Label>
                             <Input id="lastName" {...register('lastName')} />
                             {errors.lastName && <span className="text-xs text-destructive">{errors.lastName.message}</span>}
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">{t('email')}</Label>
                         <Input id="email" value={user?.email || ''} disabled className="bg-muted" />
-                        <p className="text-xs text-muted-foreground">L'email ne peut pas être modifié.</p>
+                        <p className="text-xs text-muted-foreground">{t('emailLocked')}</p>
                     </div>
 
                     <div className="pt-4">
                         <Button type="submit" disabled={mutation.isPending}>
-                            {mutation.isPending ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                            {mutation.isPending ? t('saving') : t('saveChanges')}
                         </Button>
                     </div>
                 </form>

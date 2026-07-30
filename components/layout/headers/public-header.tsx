@@ -4,27 +4,27 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Search, Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { Logo } from '@/components/layout/logo';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/auth/auth-store';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { cn } from '@/lib/utils/cn';
 import { LocationDisplay } from '@/components/features/location';
-
-// Note: ThemeToggle will be implemented later, mocked for now
-// or implemented inline if simple.
 
 export function PublicHeader() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const pathname = usePathname();
     const { isAuthenticated, user } = useAuthStore();
+    const t = useTranslations('nav');
 
     const navItems = [
-        { label: 'Accueil', href: '/' },
-        { label: 'Explorer', href: '/search' },
-        { label: 'Catégories', href: '/categories' },
-{ label: 'Promotions', href: '/promotions' },
+        { label: t('home'), href: '/' },
+        { label: t('explore'), href: '/search' },
+        { label: t('categories'), href: '/categories' },
+        { label: t('promotions'), href: '/promotions' },
     ];
 
     return (
@@ -68,8 +68,11 @@ export function PublicHeader() {
                         )}
                     >
                         <Search className="h-5 w-5" />
-                        <span className="sr-only">Rechercher</span>
+                        <span className="sr-only">{t('searchLabel')}</span>
                     </Link>
+
+                    {/* Language */}
+                    <LanguageSwitcher />
 
                     {/* Theme Toggle */}
                     <ThemeToggle />
@@ -79,7 +82,7 @@ export function PublicHeader() {
                             href="/dashboard"
                             className={buttonVariants()}
                         >
-                            Mon Tableau de bord
+                            {t('myDashboard')}
                         </Link>
                     ) : (
                         <div className="hidden sm:flex items-center gap-2">
@@ -87,13 +90,13 @@ export function PublicHeader() {
                                 href="/login"
                                 className={buttonVariants({ variant: 'ghost' })}
                             >
-                                Connexion
+                                {t('login')}
                             </Link>
                             <Link
                                 href="/register"
                                 className={buttonVariants()}
                             >
-                                Inscription
+                                {t('register')}
                             </Link>
                         </div>
                     )}
@@ -136,14 +139,14 @@ export function PublicHeader() {
                                     onClick={() => setMobileMenuOpen(false)}
                                     className={cn(buttonVariants({ variant: 'outline' }), "w-full")}
                                 >
-                                    Connexion
+                                    {t('login')}
                                 </Link>
                                 <Link
                                     href="/register"
                                     onClick={() => setMobileMenuOpen(false)}
                                     className={cn(buttonVariants(), "w-full")}
                                 >
-                                    Inscription
+                                    {t('register')}
                                 </Link>
                             </div>
                         ) : (
@@ -152,7 +155,7 @@ export function PublicHeader() {
                                 onClick={() => setMobileMenuOpen(false)}
                                 className={cn(buttonVariants(), "w-full")}
                             >
-                                Mon Tableau de bord
+                                {t('myDashboard')}
                             </Link>
                         )}
                     </nav>

@@ -16,57 +16,54 @@ import {
     ShieldAlert
 } from 'lucide-react';
 
+import { useTranslations } from 'next-intl';
 import { useUIStore } from '@/lib/stores/ui-store';
 import { useAuthStore } from '@/lib/auth/auth-store';
 import { cn } from '@/lib/utils/cn';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Logo } from '@/components/layout/logo';
 
-const sidebarItems = [
-    {
-        title: 'Vue d\'ensemble',
-        href: '/dashboard',
-        icon: LayoutDashboard,
-    },
-    {
-        title: 'Mes Entreprises',
-        href: '/organizations',
-        icon: Briefcase,
-    },
-    {
-        title: 'Favoris',
-        href: '/favorites',
-        icon: Heart,
-    },
-    {
-        title: 'Messages',
-        href: '/inquiries',
-        icon: MessageSquare,
-    },
-    // {
-    //   title: 'Statistiques',
-    //   href: '/analytics',
-    //   icon: BarChart3,
-    // },
-    {
-        title: 'Paramètres',
-        href: '/profile',
-        icon: Settings,
-    },
-];
-
-const adminItems = [
-    {
-        title: 'Administration',
-        href: '/admin',
-        icon: ShieldAlert,
-    },
-];
-
 export function DashboardSidebar() {
     const pathname = usePathname();
+    const t = useTranslations('sidebar');
     const { sidebarCollapsed, toggleSidebarCollapsed, mobileNavOpen, closeMobileUI } = useUIStore();
     const { logout, user } = useAuthStore();
+
+    const sidebarItems = [
+        {
+            title: t('overview'),
+            href: '/dashboard',
+            icon: LayoutDashboard,
+        },
+        {
+            title: t('myBusinesses'),
+            href: '/organizations',
+            icon: Briefcase,
+        },
+        {
+            title: t('favorites'),
+            href: '/favorites',
+            icon: Heart,
+        },
+        {
+            title: t('messages'),
+            href: '/inquiries',
+            icon: MessageSquare,
+        },
+        {
+            title: t('settings'),
+            href: '/profile',
+            icon: Settings,
+        },
+    ];
+
+    const adminItems = [
+        {
+            title: t('administration'),
+            href: '/admin',
+            icon: ShieldAlert,
+        },
+    ];
     // Basé sur les permissions kernel réelles, pas sur `user.role` (jamais peuplé).
     const isAdmin = user?.isPlatformAdmin === true || user?.isPlatformSuperAdmin === true;
 
@@ -199,10 +196,10 @@ export function DashboardSidebar() {
                         sidebarCollapsed && "justify-center px-2"
                     )}
                     onClick={logout}
-                    title="Se déconnecter"
+                    title={t('logout')}
                 >
                     <LogOut className="h-5 w-5 mr-2" />
-                    {!sidebarCollapsed && "Déconnexion"}
+                    {!sidebarCollapsed && t('logout')}
                 </Button>
 
                 {/* Mobile Collapse Button (bottom, visible only on mobile if you want, but strictly Sidebar is hidden on mobile often, let's keep it simple) */}

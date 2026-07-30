@@ -38,6 +38,7 @@ import {
     getOrganizationContacts,
 } from '@/lib/api/public';
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/auth';
 import { toast } from 'react-hot-toast';
 import type { Service } from '@/lib/api/public';
@@ -49,6 +50,7 @@ import { AdPlacement } from '@/components/features/ads/ad-placement';
 const getImageUrl = (path: string | null | undefined) => getAssetUrl(path) || '';
 
 function ServiceCard({ service }: { service: Service }) {
+    const t = useTranslations('business');
     const [isExpanded, setIsExpanded] = useState(false);
     const hasLongDescription = service.description && service.description.length > 100;
 
@@ -98,7 +100,7 @@ function ServiceCard({ service }: { service: Service }) {
                                 onClick={() => setIsExpanded(!isExpanded)}
                                 className="text-primary text-xs font-medium mt-1 hover:underline focus:outline-none"
                             >
-                                {isExpanded ? 'Voir moins' : 'Voir plus'}
+                                {isExpanded ? t('seeLess') : t('seeMore')}
                             </button>
                         )}
                     </div>
@@ -109,11 +111,13 @@ function ServiceCard({ service }: { service: Service }) {
 }
 
 function OrgServices({ services }: { services: Service[] }) {
+    const t = useTranslations('business');
+
     if (services.length === 0) return null;
 
     return (
         <div className="space-y-6">
-            <h3 className="text-xl font-semibold">Nos services</h3>
+            <h3 className="text-xl font-semibold">{t('ourServices')}</h3>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {services.map((service) => (
                     <ServiceCard key={service.id} service={service} />
@@ -124,6 +128,7 @@ function OrgServices({ services }: { services: Service[] }) {
 }
 
 export default function BusinessPage({ params }: { params: { slug: string } }) {
+    const t = useTranslations('business');
     const queryClient = useQueryClient();
     const { isAuthenticated } = useAuthStore();
     const [isFavorite, setIsFavorite] = useState(false);
@@ -257,14 +262,14 @@ export default function BusinessPage({ params }: { params: { slug: string } }) {
             if (isFavorite) {
                 await removeFavorite(org.id);
                 setIsFavorite(false);
-                toast.success('Retiré des favoris');
+                toast.success(t('removedFromFavorites'));
                 // Invalidate cache to ensure state is synced
                 queryClient.invalidateQueries({ queryKey: ['favorite', org.id] });
                 queryClient.invalidateQueries({ queryKey: ['my-favorites'] });
             } else {
                 await addFavorite(org.id);
                 setIsFavorite(true);
-                toast.success('Ajouté aux favoris');
+                toast.success(t('addedToFavorites'));
                 // Invalidate cache to ensure state is synced
                 queryClient.invalidateQueries({ queryKey: ['favorite', org.id] });
                 queryClient.invalidateQueries({ queryKey: ['my-favorites'] });
@@ -279,14 +284,14 @@ export default function BusinessPage({ params }: { params: { slug: string } }) {
             if (status === 409) {
                 // Conflict means it was already added, so treat as success and sync state
                 setIsFavorite(true);
-                toast.success('Ajouté aux favoris');
+                toast.success(t('addedToFavorites'));
                 // Invalidate queries to ensure everything is in sync
                 queryClient.invalidateQueries({ queryKey: ['favorite', org.id] });
                 queryClient.invalidateQueries({ queryKey: ['my-favorites'] });
                 return;
             }
             console.error(error);
-            toast.error('Une erreur est survenue');
+            toast.error(t('favoriteError'));
         }
     };
 
@@ -337,20 +342,20 @@ export default function BusinessPage({ params }: { params: { slug: string } }) {
             <div className="container-wrapper py-8">
                 <Tabs defaultValue="about" className="space-y-6">
                     <TabsList className="w-full justify-start overflow-x-auto">
-                        <TabsTrigger value="about">À propos</TabsTrigger>
-                        <TabsTrigger value="services">Services</TabsTrigger>
-                        <TabsTrigger value="gallery">Galerie{gallery.length > 0 ? ` (${gallery.length})` : ''}</TabsTrigger>
-                        <TabsTrigger value="posts">Articles {postsData?.totalElements ? `(${postsData.totalElements})` : ''}</TabsTrigger>
-                        <TabsTrigger value="promotions">Promotions {promotionsData?.totalElements ? `(${promotionsData.totalElements})` : ''}</TabsTrigger>
-                        <TabsTrigger value="reviews">Avis ({org.reviewCount ?? 0})</TabsTrigger>
-                        <TabsTrigger value="contact">Contacts</TabsTrigger>
+                        <TabsTrigger value="about">{t('tabAbout')}</TabsTrigger>
+                        <TabsTrigger value="services">{t('tabServices')}</TabsTrigger>
+                        <TabsTrigger value="gallery">{t('tabGallery')}{gallery.length > 0 ? ` (${gallery.length})` : ''}</TabsTrigger>
+                        <TabsTrigger value="posts">{t('tabPosts')} {postsData?.totalElements ? `(${postsData.totalElements})` : ''}</TabsTrigger>
+                        <TabsTrigger value="promotions">{t('tabPromotions')} {promotionsData?.totalElements ? `(${promotionsData.totalElements})` : ''}</TabsTrigger>
+                        <TabsTrigger value="reviews">{t('tabReviews', { count: org.reviewCount ?? 0 })}</TabsTrigger>
+                        <TabsTrigger value="contact">{t('tabContact')}</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="about" className="space-y-8">
                         {/* Description */}
                         {org.description && (
                             <div className="prose dark:prose-invert max-w-none">
-                                <h3 className="text-lg font-semibold mb-3">Description</h3>
+                                <h3 className="text-lg font-semibold mb-3">{t('description')}</h3>
                                 <p className="text-muted-foreground">{org.description}</p>
                             </div>
                         )}

@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { SearchResults } from '@/components/features/search/search-results';
 import { FilterChips } from '@/components/ui/filter-chips';
 import { Search, Loader2 } from 'lucide-react';
 import { getCategories } from '@/lib/api/public';
 
 export default function SearchPage() {
+    const t = useTranslations('search');
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -24,7 +26,7 @@ export default function SearchPage() {
 
     // Build filter options from backend categories
     const filterOptions = [
-        { id: 'all', label: 'Tout' },
+        { id: 'all', label: t('filterAll') },
         ...(categories?.map(cat => ({
             id: cat.slug,
             label: cat.name
@@ -73,14 +75,14 @@ export default function SearchPage() {
                             <input
                                 name="q"
                                 type="text"
-                                placeholder="Rechercher une entreprise, un service..."
+                                placeholder={t('placeholder')}
                                 className="w-full h-10 pl-4 pr-10 rounded-full border bg-muted/50 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                                 defaultValue={searchParams.get('q') || ''}
                             />
                             <Search className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         </div>
                         <button type="submit" className="h-10 px-6 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-medium transition-colors hidden sm:block">
-                            Rechercher
+                            {t('submit')}
                         </button>
                     </form>
 
@@ -88,7 +90,7 @@ export default function SearchPage() {
                     {categoriesLoading ? (
                         <div className="flex items-center gap-2 text-muted-foreground py-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm">Chargement des catégories...</span>
+                            <span className="text-sm">{t('loadingCategories')}</span>
                         </div>
                     ) : (
                         <FilterChips

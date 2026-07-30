@@ -2,17 +2,20 @@
 
 import Link from 'next/link';
 import { Building2, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
 
-const benefits = [
-    'Visibilité auprès de milliers de clients potentiels',
-    'Badge de certification pour gagner la confiance',
-    'Outils de gestion des avis et interactions',
-    'Analytics détaillés sur votre audience',
-];
-
 export function CTASection() {
+    const t = useTranslations('home.cta');
+
+    const benefits = [
+        t('benefit1'),
+        t('benefit2'),
+        t('benefit3'),
+        t('benefit4'),
+    ];
+
     return (
         <section className="py-16 md:py-24">
             <div className="container-wrapper">
@@ -24,16 +27,15 @@ export function CTASection() {
                     <div className="relative z-10 max-w-3xl">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-medium mb-6">
                             <Building2 className="h-4 w-4" />
-                            Pour les entreprises
+                            {t('badge')}
                         </div>
 
                         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                            Inscrivez votre entreprise et atteignez de nouveaux clients
+                            {t('title')}
                         </h2>
 
                         <p className="text-lg text-white/80 mb-8">
-                            Rejoignez l'annuaire BusinessBook et bénéficiez d'une visibilité accrue
-                            auprès de milliers de clients à la recherche de services de qualité.
+                            {t('subtitle')}
                         </p>
 
                         <ul className="grid md:grid-cols-2 gap-3 mb-8">
@@ -53,7 +55,7 @@ export function CTASection() {
                                     "bg-white text-primary hover:bg-white/90"
                                 )}
                             >
-                                Inscrire mon entreprise
+                                {t('register')}
                                 <ArrowRight className="ml-2 h-5 w-5" />
                             </Link>
                             <Link
@@ -63,7 +65,7 @@ export function CTASection() {
                                     "bg-transparent border-white/30 text-white hover:bg-white/10"
                                 )}
                             >
-                                En savoir plus
+                                {t('learnMore')}
                             </Link>
                         </div>
                     </div>

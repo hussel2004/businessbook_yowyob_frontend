@@ -5,6 +5,7 @@ import { useUIStore } from '@/lib/stores/ui-store';
 import { useAuthStore } from '@/lib/auth/auth-store';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { Avatar } from '@/components/ui/avatar';
 import { Logo } from '@/components/layout/logo';
 import { NotificationBell } from '@/components/features/notifications/notification-bell';
@@ -47,6 +48,9 @@ export function DashboardHeader() {
             <div className="flex items-center gap-4">
                 {/* Notifications */}
                 <NotificationBell />
+
+                {/* Language */}
+                <LanguageSwitcher />
 
                 {/* Theme */}
                 <ThemeToggle />

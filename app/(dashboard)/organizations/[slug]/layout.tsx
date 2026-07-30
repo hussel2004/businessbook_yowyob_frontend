@@ -16,8 +16,11 @@ import {
     MessageSquare,
     BarChart3,
     Share2,
-    Lightbulb
+    Lightbulb,
+    Rocket,
+    Tv
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { getOrganizationBySlug } from '@/lib/api/public';
 import { getAssetUrl } from '@/lib/api/endpoints';
@@ -27,6 +30,8 @@ export default function OrganizationLayout({ children }: { children: React.React
     const params = useParams();
     const pathname = usePathname();
     const slug = params.slug as string;
+    const t = useTranslations('orgNav');
+    const tCommon = useTranslations('common');
 
     // We fetch basic org info here for the header/context
     // Ideally we use a cached query or a separate 'manage' endpoint
@@ -35,23 +40,25 @@ export default function OrganizationLayout({ children }: { children: React.React
         queryFn: () => getOrganizationBySlug(slug),
     });
 
-    if (isLoading) return <div>Chargement...</div>;
-    if (!org) return <div>Entreprise introuvable</div>;
+    if (isLoading) return <div>{tCommon('loading')}</div>;
+    if (!org) return <div>{tCommon('notFound')}</div>;
 
     const navItems = [
-        { title: 'Vue d\'ensemble', href: `/organizations/${slug}`, icon: LayoutDashboard, exact: true },
-        { title: 'Informations', href: `/organizations/${slug}/edit`, icon: Info },
-        { title: 'Agences', href: `/organizations/${slug}/branches`, icon: MapPin },
-        { title: 'Services', href: `/organizations/${slug}/services`, icon: Briefcase },
-        { title: 'Galerie', href: `/organizations/${slug}/gallery`, icon: ImageIcon },
-        { title: 'Réseaux sociaux', href: `/organizations/${slug}/social`, icon: Share2 },
-        { title: 'Publications', href: `/organizations/${slug}/posts`, icon: PenTool },
-        { title: 'Promotions', href: `/organizations/${slug}/promotions`, icon: Megaphone },
-        { title: 'Avis', href: `/organizations/${slug}/reviews`, icon: Star },
-        { title: 'Suggestions', href: `/organizations/${slug}/suggestions`, icon: Lightbulb },
-        { title: 'Statistiques', href: `/organizations/${slug}/analytics`, icon: BarChart3 },
-        { title: 'Messages', href: `/organizations/${slug}/inquiries`, icon: MessageSquare },
-        { title: 'Vérification', href: `/organizations/${slug}/verification`, icon: ShieldCheck },
+        { title: t('overview'), href: `/organizations/${slug}`, icon: LayoutDashboard, exact: true },
+        { title: t('info'), href: `/organizations/${slug}/edit`, icon: Info },
+        { title: t('branches'), href: `/organizations/${slug}/branches`, icon: MapPin },
+        { title: t('services'), href: `/organizations/${slug}/services`, icon: Briefcase },
+        { title: t('gallery'), href: `/organizations/${slug}/gallery`, icon: ImageIcon },
+        { title: t('social'), href: `/organizations/${slug}/social`, icon: Share2 },
+        { title: t('posts'), href: `/organizations/${slug}/posts`, icon: PenTool },
+        { title: t('promotions'), href: `/organizations/${slug}/promotions`, icon: Megaphone },
+        { title: t('reviews'), href: `/organizations/${slug}/reviews`, icon: Star },
+        { title: t('suggestions'), href: `/organizations/${slug}/suggestions`, icon: Lightbulb },
+        { title: t('analytics'), href: `/organizations/${slug}/analytics`, icon: BarChart3 },
+        { title: t('messages'), href: `/organizations/${slug}/inquiries`, icon: MessageSquare },
+        { title: t('verification'), href: `/organizations/${slug}/verification`, icon: ShieldCheck },
+        { title: t('boost'), href: `/organizations/${slug}/boost`, icon: Rocket, highlight: true },
+        { title: t('ads'), href: `/organizations/${slug}/ads`, icon: Tv, highlight: true },
     ];
 
     return (
@@ -71,7 +78,7 @@ export default function OrganizationLayout({ children }: { children: React.React
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">{org.longName}</h2>
                         <a href={`/business/${slug}`} target="_blank" className="text-sm text-primary hover:underline">
-                            Voir la page publique
+                            {t('viewPublicPage')}
                         </a>
                     </div>
                 </div>

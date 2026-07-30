@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/lib/auth/auth-store';
 
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { get } from '@/lib/api/client';
 import { ENDPOINTS, getAssetUrl } from '@/lib/api/endpoints';
 import { buttonVariants } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import {
 import type { OrganizationSummary } from '@/lib/api/public';
 
 export default function OrganizationsPage() {
+    const t = useTranslations('organizations');
     const { user } = useAuthStore();
     const { data: organizations, isLoading } = useQuery({
         queryKey: ['my-organizations'],
@@ -41,9 +43,9 @@ export default function OrganizationsPage() {
         <div className="space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Mes Entreprises</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
                     <p className="text-muted-foreground">
-                        Gérez vos pages entreprises sur BusinessBook.
+                        {t('subtitle')}
                     </p>
                 </div>
                 {canCreateOrganization && (
@@ -52,7 +54,7 @@ export default function OrganizationsPage() {
                         className={buttonVariants()}
                     >
                         <Plus className="h-4 w-4 mr-2" />
-                        Ajouter une entreprise
+                        {t('addBusiness')}
                     </Link>
                 )}
             </div>
@@ -66,15 +68,15 @@ export default function OrganizationsPage() {
             ) : organizations?.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-12 border rounded-xl bg-card text-center">
                     <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Aucune entreprise</h3>
+                    <h3 className="text-lg font-semibold mb-2">{t('emptyTitle')}</h3>
                     <p className="text-muted-foreground mb-6 max-w-sm">
-                        Vous n'avez pas encore ajouté d'entreprise. Créez votre première page entreprise dès maintenant.
+                        {t('emptyDescription')}
                     </p>
                     <Link
                         href="/organizations/create"
                         className={buttonVariants()}
                     >
-                        Ajouter une entreprise
+                        {t('addBusiness')}
                     </Link>
                 </div>
             ) : (
@@ -97,7 +99,7 @@ export default function OrganizationsPage() {
                                         <span>{org.categoryName}</span>
                                         <span>•</span>
                                         <span className={org.isVerified ? "text-green-600" : "text-amber-600"}>
-                                            {org.isVerified ? 'Vérifié' : 'En attente'}
+                                            {org.isVerified ? t('verified') : t('pending')}
                                         </span>
                                     </div>
                                     {org.city && (

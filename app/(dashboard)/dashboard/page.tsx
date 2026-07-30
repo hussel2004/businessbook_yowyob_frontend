@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/auth/hooks';
 import { Button, buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
@@ -13,6 +14,8 @@ import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 export default function DashboardPage() {
+    const t = useTranslations('dashboard');
+    const tCommon = useTranslations('common');
     const { user, becomeBusinessOwner, isBecomingBusinessOwner } = useAuth();
     const router = useRouter();
     const isBusinessOwner = user?.accountType === 'BUSINESS';
@@ -38,9 +41,9 @@ export default function DashboardPage() {
     const handleBecomeBusinessOwner = async () => {
         try {
             await becomeBusinessOwner();
-            toast.success('Vous êtes maintenant business owner !');
+            toast.success(t('becameBusinessOwner'));
         } catch {
-            toast.error('Impossible de passer business owner pour le moment.');
+            toast.error(t('becomeBusinessOwnerError'));
         }
     };
 
@@ -51,9 +54,9 @@ export default function DashboardPage() {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
                 <p className="text-muted-foreground">
-                    Bienvenue sur votre espace de gestion BusinessBook.
+                    {t('welcome')}
                 </p>
             </div>
 
@@ -62,7 +65,7 @@ export default function DashboardPage() {
                 <div className="rounded-xl border bg-card p-6 shadow-sm">
                     <div className="flex flex-col space-y-2">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-sm text-muted-foreground">Mes Entreprises</h3>
+                            <h3 className="font-semibold text-sm text-muted-foreground">{t('myBusinesses')}</h3>
                             <Briefcase className="h-4 w-4 text-muted-foreground" />
                         </div>
                         {isBusinessOwner ? (
@@ -76,14 +79,14 @@ export default function DashboardPage() {
                                         href="/organizations/create"
                                         className={cn(buttonVariants({ size: 'sm' }), "w-full mt-4")}
                                     >
-                                        Ajouter une entreprise
+                                        {t('addBusiness')}
                                     </Link>
                                 )}
                             </>
                         ) : (
                             <>
                                 <p className="text-xs text-muted-foreground">
-                                    Référencez votre activité sur BusinessBook.
+                                    {t('listYourBusiness')}
                                 </p>
                                 <Button
                                     size="sm"
@@ -91,7 +94,7 @@ export default function DashboardPage() {
                                     onClick={handleBecomeBusinessOwner}
                                     disabled={isBecomingBusinessOwner}
                                 >
-                                    {isBecomingBusinessOwner ? 'Chargement...' : 'Devenir business owner'}
+                                    {isBecomingBusinessOwner ? tCommon('loading') : t('becomeBusinessOwner')}
                                 </Button>
                             </>
                         )}
@@ -102,12 +105,12 @@ export default function DashboardPage() {
                 <div className="rounded-xl border bg-card p-6 shadow-sm">
                     <div className="flex flex-col space-y-2">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-sm text-muted-foreground">Avis reçus</h3>
+                            <h3 className="font-semibold text-sm text-muted-foreground">{t('reviewsReceived')}</h3>
                             <Star className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="text-3xl font-bold">{stats?.totalReviews || 0}</div>
                         <p className="text-xs text-muted-foreground mt-2">
-                            Avis cumulés sur vos pages
+                            {t('reviewsHint')}
                         </p>
                     </div>
                 </div>
@@ -115,12 +118,12 @@ export default function DashboardPage() {
                 <div className="rounded-xl border bg-card p-6 shadow-sm">
                     <div className="flex flex-col space-y-2">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-sm text-muted-foreground">Favoris</h3>
+                            <h3 className="font-semibold text-sm text-muted-foreground">{t('favorites')}</h3>
                             <Heart className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="text-3xl font-bold">{stats?.favoritesCount || 0}</div>
                         <p className="text-xs text-muted-foreground mt-2">
-                            Pages enregistrées
+                            {t('favoritesHint')}
                         </p>
                     </div>
                 </div>
@@ -128,12 +131,12 @@ export default function DashboardPage() {
                 <div className="rounded-xl border bg-card p-6 shadow-sm">
                     <div className="flex flex-col space-y-2">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-sm text-muted-foreground">Notifications</h3>
+                            <h3 className="font-semibold text-sm text-muted-foreground">{t('notifications')}</h3>
                             <MessageSquare className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="text-3xl font-bold">{stats?.unreadNotifications || 0}</div>
                         <p className="text-xs text-muted-foreground mt-2">
-                            Non lues
+                            {t('notificationsHint')}
                         </p>
                     </div>
                 </div>

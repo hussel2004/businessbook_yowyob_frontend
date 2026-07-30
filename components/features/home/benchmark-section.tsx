@@ -2,12 +2,14 @@
 
 import Image from 'next/image';
 import { Check, Minus, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils/cn';
 
 type Support = 'yes' | 'partial' | 'no';
 
 interface BenchmarkRow {
-    feature: string;
+    /** Clé de traduction du libellé (home.benchmark.rowN) */
+    key: string;
     businessbook: Support;
     gmb: Support;
     yelp: Support;
@@ -16,94 +18,17 @@ interface BenchmarkRow {
 }
 
 const rows: BenchmarkRow[] = [
-    {
-        feature: 'Fiches entreprises vérifiées manuellement par une équipe locale',
-        businessbook: 'yes',
-        gmb: 'partial',
-        yelp: 'partial',
-        maligah: 'partial',
-        classic: 'no',
-    },
-    {
-        feature: "Couverture dédiée à l'Afrique centrale, villes secondaires incluses",
-        businessbook: 'yes',
-        gmb: 'partial',
-        yelp: 'no',
-        maligah: 'partial',
-        classic: 'no',
-    },
-    {
-        feature: 'Recherche géolocalisée et filtres par secteur d’activité',
-        businessbook: 'yes',
-        gmb: 'yes',
-        yelp: 'yes',
-        maligah: 'yes',
-        classic: 'partial',
-    },
-    {
-        feature: 'Avis clients vérifiés et modérés contre les faux avis',
-        businessbook: 'yes',
-        gmb: 'partial',
-        yelp: 'partial',
-        maligah: 'partial',
-        classic: 'no',
-    },
-    {
-        feature: 'Espace pro pour gérer sa fiche en temps réel',
-        businessbook: 'yes',
-        gmb: 'yes',
-        yelp: 'yes',
-        maligah: 'partial',
-        classic: 'no',
-    },
-    {
-        feature: 'Statistiques de visibilité et analytics pour les entreprises',
-        businessbook: 'yes',
-        gmb: 'partial',
-        yelp: 'partial',
-        maligah: 'no',
-        classic: 'no',
-    },
-    {
-        feature: 'Mise en relation directe (appel, WhatsApp, itinéraire)',
-        businessbook: 'yes',
-        gmb: 'partial',
-        yelp: 'partial',
-        maligah: 'yes',
-        classic: 'partial',
-    },
-    {
-        feature: 'Utilisable en contexte de connexion faible ou instable',
-        businessbook: 'yes',
-        gmb: 'no',
-        yelp: 'no',
-        maligah: 'partial',
-        classic: 'yes',
-    },
-    {
-        feature: 'Support et accompagnement en français, ancré localement',
-        businessbook: 'yes',
-        gmb: 'no',
-        yelp: 'no',
-        maligah: 'partial',
-        classic: 'partial',
-    },
-    {
-        feature: "Intégration à un écosystème d'outils de gestion (compta, RH...)",
-        businessbook: 'yes',
-        gmb: 'no',
-        yelp: 'no',
-        maligah: 'no',
-        classic: 'no',
-    },
-    {
-        feature: 'Indépendance vis-à-vis des plateformes internationales tierces',
-        businessbook: 'yes',
-        gmb: 'no',
-        yelp: 'no',
-        maligah: 'partial',
-        classic: 'yes',
-    },
+    { key: 'row1', businessbook: 'yes', gmb: 'partial', yelp: 'partial', maligah: 'partial', classic: 'no' },
+    { key: 'row2', businessbook: 'yes', gmb: 'partial', yelp: 'no', maligah: 'partial', classic: 'no' },
+    { key: 'row3', businessbook: 'yes', gmb: 'yes', yelp: 'yes', maligah: 'yes', classic: 'partial' },
+    { key: 'row4', businessbook: 'yes', gmb: 'partial', yelp: 'partial', maligah: 'partial', classic: 'no' },
+    { key: 'row5', businessbook: 'yes', gmb: 'yes', yelp: 'yes', maligah: 'partial', classic: 'no' },
+    { key: 'row6', businessbook: 'yes', gmb: 'partial', yelp: 'partial', maligah: 'no', classic: 'no' },
+    { key: 'row7', businessbook: 'yes', gmb: 'partial', yelp: 'partial', maligah: 'yes', classic: 'partial' },
+    { key: 'row8', businessbook: 'yes', gmb: 'no', yelp: 'no', maligah: 'partial', classic: 'yes' },
+    { key: 'row9', businessbook: 'yes', gmb: 'no', yelp: 'no', maligah: 'partial', classic: 'partial' },
+    { key: 'row10', businessbook: 'yes', gmb: 'no', yelp: 'no', maligah: 'no', classic: 'no' },
+    { key: 'row11', businessbook: 'yes', gmb: 'no', yelp: 'no', maligah: 'partial', classic: 'yes' },
 ];
 
 function SupportIcon({ status }: { status: Support }) {
@@ -179,20 +104,20 @@ function CompetitorHeader({ name, subtitle, logoSrc, highlighted }: CompetitorHe
 }
 
 export function BenchmarkSection() {
+    const t = useTranslations('home.benchmark');
+
     return (
         <section className="py-16 md:py-24">
             <div className="container-wrapper">
                 <div className="text-center mb-12">
                     <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-                        Comparatif
+                        {t('badge')}
                     </span>
                     <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                        Pourquoi choisir BusinessBook ?
+                        {t('title')}
                     </h2>
                     <p className="text-muted-foreground max-w-2xl mx-auto">
-                        Comparé à Google My Business, Yelp, Maligah et aux solutions classiques,
-                        BusinessBook offre la couverture la plus complète et la plus fiable pour
-                        l&apos;Afrique centrale.
+                        {t('subtitle')}
                     </p>
                 </div>
 
@@ -202,12 +127,12 @@ export function BenchmarkSection() {
                             <thead>
                                 <tr className="border-b bg-muted/30">
                                     <th className="text-left font-semibold text-sm text-muted-foreground uppercase tracking-wide px-6 py-5 w-[28%]">
-                                        Fonctionnalité
+                                        {t('featureColumn')}
                                     </th>
                                     <th className="px-4 py-5 w-[18%]">
                                         <CompetitorHeader
                                             name="BusinessBook"
-                                            subtitle="Annuaire certifié"
+                                            subtitle={t('businessbookSubtitle')}
                                             logoSrc="/businessbook_logo.png"
                                             highlighted
                                         />
@@ -215,28 +140,28 @@ export function BenchmarkSection() {
                                     <th className="px-4 py-5 w-[14.5%]">
                                         <CompetitorHeader
                                             name="Google My Business"
-                                            subtitle="Fiches Google Maps"
+                                            subtitle={t('gmbSubtitle')}
                                             logoSrc="/competitors/google-business-profile.png"
                                         />
                                     </th>
                                     <th className="px-4 py-5 w-[14.5%]">
                                         <CompetitorHeader
                                             name="Yelp"
-                                            subtitle="Annuaire & avis"
+                                            subtitle={t('yelpSubtitle')}
                                             logoSrc="/competitors/yelp.png"
                                         />
                                     </th>
                                     <th className="px-4 py-5 w-[14.5%]">
                                         <CompetitorHeader
                                             name="Maligah"
-                                            subtitle="Annuaire en ligne"
+                                            subtitle={t('maligahSubtitle')}
                                             logoSrc="/competitors/maligah.png"
                                         />
                                     </th>
                                     <th className="px-4 py-5 w-[14.5%]">
                                         <CompetitorHeader
-                                            name="Solutions classiques"
-                                            subtitle="Pages jaunes, bouche-à-oreille"
+                                            name={t('classicName')}
+                                            subtitle={t('classicSubtitle')}
                                         />
                                     </th>
                                 </tr>
@@ -244,14 +169,14 @@ export function BenchmarkSection() {
                             <tbody>
                                 {rows.map((row, idx) => (
                                     <tr
-                                        key={row.feature}
+                                        key={row.key}
                                         className={cn(
                                             'border-b last:border-b-0',
                                             idx % 2 === 1 && 'bg-muted/20'
                                         )}
                                     >
                                         <td className="px-6 py-4 text-sm font-medium text-foreground">
-                                            {row.feature}
+                                            {t(row.key)}
                                         </td>
                                         <td className="px-4 py-4">
                                             <div className="flex justify-center bg-primary/5 rounded-lg py-1">
@@ -288,15 +213,15 @@ export function BenchmarkSection() {
                 <div className="flex flex-wrap items-center justify-center gap-6 mt-6 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2">
                         <SupportIcon status="yes" />
-                        <span>Disponible</span>
+                        <span>{t('legendYes')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <SupportIcon status="partial" />
-                        <span>Partiel / limité</span>
+                        <span>{t('legendPartial')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <SupportIcon status="no" />
-                        <span>Indisponible</span>
+                        <span>{t('legendNo')}</span>
                     </div>
                 </div>
             </div>
